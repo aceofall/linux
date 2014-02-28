@@ -103,6 +103,7 @@ extern const struct cpumask *const cpu_active_mask;
 #define num_present_cpus()	cpumask_weight(cpu_present_mask)
 #define num_active_cpus()	cpumask_weight(cpu_active_mask)
 #define cpu_online(cpu)		cpumask_test_cpu((cpu), cpu_online_mask)
+// PRE-KID 20140228
 #define cpu_possible(cpu)	cpumask_test_cpu((cpu), cpu_possible_mask)
 #define cpu_present(cpu)	cpumask_test_cpu((cpu), cpu_present_mask)
 #define cpu_active(cpu)		cpumask_test_cpu((cpu), cpu_active_mask)
@@ -302,6 +303,7 @@ static inline void cpumask_clear_cpu(int cpu, struct cpumask *dstp)
  *
  * No static inline type checking - see Subtlety (1) above.
  */
+// PRE-KID 20140228
 #define cpumask_test_cpu(cpu, cpumask) \
 	test_bit(cpumask_check(cpu), cpumask_bits((cpumask)))
 
@@ -572,10 +574,15 @@ static inline void cpumask_copy(struct cpumask *dstp,
  * If len is zero, returns zero.  Otherwise returns the length of the
  * (nul-terminated) @buf string.
  */
+// PRE-KID 20140228
+// sizeof(cpus_buf): 4096, cpu_possible_mask: cpu_possible_bits
 static inline int cpumask_scnprintf(char *buf, int len,
 				    const struct cpumask *srcp)
 {
+	// len: 4095, cpumask_bits(cpu_possible_bits): cpu_possible_bits->bits,
+	// nr_cpumask_bits: 4
 	return bitmap_scnprintf(buf, len, cpumask_bits(srcp), nr_cpumask_bits);
+	// return 0
 }
 
 /**

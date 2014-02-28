@@ -6,6 +6,7 @@
 #define KERN_SOH_ASCII	'\001'
 
 // ARM10C 20130914
+// PRE-KID 20140228
 #define KERN_EMERG	KERN_SOH "0"	/* system is unusable */
 #define KERN_ALERT	KERN_SOH "1"	/* action must be taken immediately */
 #define KERN_CRIT	KERN_SOH "2"	/* critical conditions */
