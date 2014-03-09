@@ -1,16 +1,19 @@
 #ifndef __KERN_LEVELS_H__
 #define __KERN_LEVELS_H__
 
+// KID 20140203
 // ARM10C 20140301
 #define KERN_SOH	"\001"		/* ASCII Start Of Header */
 #define KERN_SOH_ASCII	'\001'
 
 // ARM10C 20130914
+// PRE-KID 20140228
 #define KERN_EMERG	KERN_SOH "0"	/* system is unusable */
 #define KERN_ALERT	KERN_SOH "1"	/* action must be taken immediately */
 #define KERN_CRIT	KERN_SOH "2"	/* critical conditions */
 #define KERN_ERR	KERN_SOH "3"	/* error conditions */
 #define KERN_WARNING	KERN_SOH "4"	/* warning conditions */
+// KID 20140203
 #define KERN_NOTICE	KERN_SOH "5"	/* normal but significant condition */
 #define KERN_INFO	KERN_SOH "6"	/* informational */
 // ARM10C 20140301

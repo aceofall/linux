@@ -59,6 +59,8 @@ static inline int cache_ops_need_broadcast(void)
  */
 // ARM10C 20140215
 extern u32 __cpu_logical_map[];
+
+// KID 20140108
 // ARM10C 20140215
 // cpu_logical_map(0): __cpu_logical_map[0]
 #define cpu_logical_map(cpu)	__cpu_logical_map[cpu]

@@ -87,6 +87,7 @@ static struct page *pcpu_addr_to_page(void *addr)
 	return virt_to_page(addr);
 }
 
+// PRE-KID 20140228
 // ARM10C 20140301
 static int __init pcpu_verify_alloc_info(const struct pcpu_alloc_info *ai)
 {

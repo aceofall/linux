@@ -28,7 +28,7 @@ extern unsigned int total_cpus;
 int smp_call_function_single(int cpuid, smp_call_func_t func, void *info,
 			     int wait);
 
-#ifdef CONFIG_SMP
+#ifdef CONFIG_SMP // CONFIG_SMP=y
 
 #include <linux/preempt.h>
 #include <linux/kernel.h>
@@ -211,6 +211,7 @@ static inline void kick_all_cpus_sync(void) {  }
  */
 #ifdef CONFIG_DEBUG_PREEMPT // CONFIG_DEBUG_PREEMPT=y
   extern unsigned int debug_smp_processor_id(void);
+// KID 20140113
 // ARM10C 20140308
 # define smp_processor_id() debug_smp_processor_id()
 #else

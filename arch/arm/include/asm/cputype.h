@@ -4,15 +4,18 @@
 #include <linux/stringify.h>
 #include <linux/kernel.h>
 
+// KID 20140204
 #define CPUID_ID	0
+// KID 20140206
 #define CPUID_CACHETYPE	1
 #define CPUID_TCM	2
 #define CPUID_TLBTYPE	3
 #define CPUID_MPUIR	4
+// KID 20140108
 // ARM10C 20140215
 #define CPUID_MPIDR	5
 
-#ifdef CONFIG_CPU_V7M
+#ifdef CONFIG_CPU_V7M // CONFIG_CPU_V7M=n
 #define CPUID_EXT_PFR0	0x40
 #define CPUID_EXT_PFR1	0x44
 #define CPUID_EXT_DFR0	0x48
@@ -36,6 +39,7 @@
 #define CPUID_EXT_MMFR1	"c1, 5"
 #define CPUID_EXT_MMFR2	"c1, 6"
 #define CPUID_EXT_MMFR3	"c1, 7"
+// KID 20140206
 #define CPUID_EXT_ISAR0	"c2, 0"
 #define CPUID_EXT_ISAR1	"c2, 1"
 #define CPUID_EXT_ISAR2	"c2, 2"
@@ -49,19 +53,29 @@
 
 #define MPIDR_MT_BITMASK (0x1 << 24)
 
+// KID 20140108
 // ARM10C 20140215
 #define MPIDR_HWID_BITMASK 0xFFFFFF
 
+// KID 20140108
 // ARM10C 20140215
 // MPIDR_INVALID: 0xFF000000
 #define MPIDR_INVALID (~MPIDR_HWID_BITMASK)
 
+// KID 20140108
 // ARM10C 20140215
 #define MPIDR_LEVEL_BITS 8
+
+// KID 20140108
+// MPIDR_LEVEL_BITS: 8
+// MPIDR_LEVEL_MASK: 256 - 1 : 255
 // ARM10C 20140215
 // MPIDR_LEVEL_MASK: 0xFF
 #define MPIDR_LEVEL_MASK ((1 << MPIDR_LEVEL_BITS) - 1)
 
+// KID 20140108
+// MPIDR_LEVEL_BITS: 8
+// MPIDR_LEVEL_MASK: 0xFF
 // ARM10C 20140215
 // MPIDR_LEVEL_BITS 8, MPIDR_LEVEL_MASK: 0xFF
 // #define MPIDR_AFFINITY_LEVEL(0x3, 0)
@@ -91,7 +105,7 @@
 
 extern unsigned int processor_id;
 
-#ifdef CONFIG_CPU_CP15
+#ifdef CONFIG_CPU_CP15 // CONFIG_CPU_CP15=y
 // ARM10C 20130824
 // 인라인 어셈블리 링크 참조
 // http://wiki.kldp.org/wiki.php/DocbookSgml/GCC_Inline_Assembly-KLDP
@@ -165,9 +179,12 @@ static inline unsigned int __attribute_const__ read_cpuid_ext(unsigned offset)
  * rather than directly reading processor_id or read_cpuid() directly.
  */
 // ARM10C 20130914 this
+// KID 20140204
 // ARM10C 20140215
 static inline unsigned int __attribute_const__ read_cpuid_id(void)
 {
+	// CPUID_ID: 0
+	// read_cpuid(CPUID_ID): A.R.M: B4.1.105 MIDR, Main ID Register, VMSA
         // CPUID_ID: 0
 	return read_cpuid(CPUID_ID);
         // read_cpuid(0): 0x413FC0F3
@@ -208,8 +225,10 @@ static inline unsigned int __attribute_const__ xscale_cpu_arch_version(void)
 }
 
 // ARM10C 20130914
+// KID 20140206
 static inline unsigned int __attribute_const__ read_cpuid_cachetype(void)
 {
+	// CPUID_CACHETYPE: 1
 	return read_cpuid(CPUID_CACHETYPE);
 }
 

@@ -189,7 +189,8 @@ __v7_ca7mp_setup:
 __v7_ca15mp_setup:
 	mov	r10, #0
 1:
-#ifdef CONFIG_SMP
+// KID 20140204
+#ifdef CONFIG_SMP // CONFIG_SMP=y
 	// T.R.M: 4.3.28: Auxiliary Control Register
 	ALT_SMP(mrc	p15, 0, r0, c1, c0, 1)
 	ALT_UP(mov	r0, #(1 << 6))		@ fake it for UP
@@ -256,6 +257,7 @@ __v7_pj4b_setup:
 
 #endif /* CONFIG_CPU_PJ4B */
 
+// KID 20140204
 __v7_setup:
 	adr	r12, __v7_setup_stack		@ the local stack
 	stmia	r12, {r0-r5, r7, r9, r11, lr}
@@ -409,6 +411,7 @@ __v7_setup_stack:
 	string	cpu_elf_name, "v7"
 	.align
 
+	// KID 20140204
 	.section ".proc.info.init", #alloc, #execinstr
 
 	/*
@@ -434,7 +437,7 @@ __v7_setup_stack:
 	.long	v7_cache_fns
 .endm
 
-#ifndef CONFIG_ARM_LPAE
+#ifndef CONFIG_ARM_LPAE // CONFIG_ARM_LPAE=n
 	/*
 	 * ARM Ltd. Cortex A5 processor.
 	 */
@@ -460,7 +463,7 @@ __v7_ca9mp_proc_info:
 	/*
 	 * Marvell PJ4B processor.
 	 */
-#ifdef CONFIG_CPU_PJ4B
+#ifdef CONFIG_CPU_PJ4B // CONFIG_CPU_PJ4B=n
 	.type   __v7_pj4b_proc_info, #object
 __v7_pj4b_proc_info:
 	.long	0x560f5800
@@ -493,6 +496,7 @@ __v7_ca7mp_proc_info:
 	 * ARM Ltd. Cortex A15 processor.
 	 */
 	.type	__v7_ca15mp_proc_info, #object
+// KID 20140204
 __v7_ca15mp_proc_info:
 	.long	0x410fc0f0
 	.long	0xff0ffff0

@@ -120,6 +120,7 @@ static int pcpu_unit_pages __read_mostly;
 // pcpu_unit_size: 0x8000
 static int pcpu_unit_size __read_mostly;
 
+// PRE-KID 20140228
 // ARM10C 20140301
 // pcpu_nr_units: 4
 static int pcpu_nr_units __read_mostly;
@@ -137,6 +138,7 @@ static int pcpu_nr_slots __read_mostly;
 static size_t pcpu_chunk_struct_size __read_mostly;
 
 /* cpus with the lowest and highest unit addresses */
+// PRE-KID 20140228
 // ARM10C 20140301
 // pcpu_low_unit_cpu: 0
 static unsigned int pcpu_low_unit_cpu __read_mostly;
@@ -1209,6 +1211,7 @@ void __init pcpu_free_alloc_info(struct pcpu_alloc_info *ai)
  *
  * Print out information about @ai using loglevel @lvl.
  */
+// PRE-KID 20140228
 // ARM10C 20140301
 // KERN_DEBUG: "\001""7"
 static void pcpu_dump_alloc_info(const char *lvl,
@@ -1278,6 +1281,7 @@ static void pcpu_dump_alloc_info(const char *lvl,
 			// alloc: 0, apl: 8
 			if (!(alloc % apl)) {
 				printk(KERN_CONT "\n");
+
 				// lvl: "\001""7"
 				printk("%spcpu-alloc: ", lvl);
 			}
@@ -1357,6 +1361,7 @@ static void pcpu_dump_alloc_info(const char *lvl,
  * RETURNS:
  * 0 on success, -errno on failure.
  */
+// PRE-KID 20140228
 // ARM10C 20140301
 // base: 128K 만큼 물리주소 0x5FFFFFFF 근처에 할당받은 주소
 int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
@@ -1536,6 +1541,8 @@ int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
 	// unit: 4
 	pcpu_nr_units = unit;
 	// pcpu_nr_units: 4
+
+// PRE-KID 2014/02/28 종료
 
 	for_each_possible_cpu(cpu)
 		// unit_map[0]: 0, UINT_MAX: 0xFFFFFFF
@@ -2140,6 +2147,8 @@ int __init pcpu_embed_first_chunk(size_t reserved_size, size_t dyn_size,
 
 	/* base address is now known, determine group base offsets */
 	max_distance = 0;
+
+// PRE-KID 2014/02/28 시작
 
 	// ai->nr_groups: 1
 	for (group = 0; group < ai->nr_groups; group++) {

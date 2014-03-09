@@ -79,13 +79,19 @@ extern void setup_dma_zone(struct machine_desc *desc);
 
 unsigned int processor_id;
 EXPORT_SYMBOL(processor_id);
+// KID 20140227
 unsigned int __machine_arch_type __read_mostly;
 EXPORT_SYMBOL(__machine_arch_type);
+// KID 20140206
 unsigned int cacheid __read_mostly;
 EXPORT_SYMBOL(cacheid);
 
 // ARM10C 20130928
 // FIXME: __atags_pointer은 왜 EXPORT_SYMBOL 을 하지 않는지?
+// KID 20140212
+// ATAG: 아래 문서 참고
+// Documentation/arm/Booting
+// Documentation/kernel-parameters.txt
 unsigned int __atags_pointer __initdata;
 
 unsigned int system_rev;
@@ -139,6 +145,8 @@ struct stack {
 
 #ifndef CONFIG_CPU_V7M
 // ARM10C 20130928
+// KID 20140207
+// NR_CPUS: 4
 static struct stack stacks[NR_CPUS];
 #endif
 
@@ -301,10 +309,13 @@ static int cpu_has_aliasing_icache(unsigned int arch)
 	// PIPT가 아닐 경우 아래 코드 수행
 	switch (arch) {
 	case CPU_ARCH_ARMv7:
+		// T.R.M: 4.3.24 Cache Size Selection Register
+		// [0]: InD: Instruction not Data bit : 1 - instruction cache
 		asm("mcr	p15, 2, %0, c0, c0, 0 @ set CSSELR"
 		    : /* No output operands */
 		    : "r" (1));
 		isb();
+		// T.R.M: 4.3.21 Cache Size ID Register
 		asm("mrc	p15, 1, %0, c0, c0, 0 @ read CCSIDR"
 		    : "=r" (id_reg));
 		line_size = 4 << ((id_reg & 0x7) + 2);
@@ -325,7 +336,7 @@ static int cpu_has_aliasing_icache(unsigned int arch)
 // ARM10C 20130914
 static void __init cacheid_init(void)
 {
-    // arch = CPU_ARCH_ARMv7
+	// arch = CPU_ARCH_ARMv7
 	unsigned int arch = cpu_architecture();
 
 	if (arch == CPU_ARCH_ARMv7M) {
@@ -336,7 +347,9 @@ static void __init cacheid_init(void)
 		if ((cachetype & (7 << 29)) == 4 << 29) {
 			/* ARMv7 register format */
 			arch = CPU_ARCH_ARMv7;
+			// CACHEID_VIPT_NONALIASING: 0x2
 			cacheid = CACHEID_VIPT_NONALIASING;
+			// cacheid: 0x2
 
 			// L1ip: b11, (Physical index, physical tag)
 			switch (cachetype & (3 << 14)) {
@@ -344,7 +357,9 @@ static void __init cacheid_init(void)
 				cacheid |= CACHEID_ASID_TAGGED;
 				break;
 			case (3 << 14):	// this
+				// CACHEID_PIPT: 0x20
 				cacheid |= CACHEID_PIPT;
+				// cacheid: 0x22
 				break;
 			}
 		} else {
@@ -356,6 +371,7 @@ static void __init cacheid_init(void)
 		}
 // 2013/09/14 종료
 // 2013/09/28 시작
+		// arch = CPU_ARCH_ARMv7
 		// cpu_has_aliasing_icache(arch) 리턴값 : 0
 		if (cpu_has_aliasing_icache(arch))
 			cacheid |= CACHEID_VIPT_I_ALIASING;
@@ -366,6 +382,9 @@ static void __init cacheid_init(void)
 	// T.R.M: 6.1 About the L1 memory system
 	// prink 출력값
 	// CPU: PIPT / VIPT nonaliasing data cache, PIPT instruction cache 
+	//  
+	// cache_is_vivt(): 0, cache_is_vipt_nonaliasing(): 0x2	
+	// cacheid_is(0x20): 0x20
 	printk("CPU: %s data cache, %s instruction cache\n",
 		cache_is_vivt() ? "VIVT" :
 		cache_is_vipt_aliasing() ? "VIPT aliasing" :
@@ -474,6 +493,7 @@ void notrace cpu_init(void)
 #ifdef CONFIG_THUMB2_KERNEL	// not defined
 #define PLC	"r"
 #else
+// KID 20140207
 #define PLC	"I"
 #endif
 
@@ -517,6 +537,9 @@ void notrace cpu_init(void)
 #endif
 }
 
+// KID 20140108
+// NR_CPUS: 4
+// MPIDR_INVALID: 0xFF000000
 // ARM10C 20140215
 u32 __cpu_logical_map[NR_CPUS] = { [0 ... NR_CPUS-1] = MPIDR_INVALID };
 
@@ -668,6 +691,7 @@ static void __init smp_build_mpidr_hash(void)
 #endif
 
 // ARM10C 20130914
+// KID 20140211
 static void __init setup_processor(void)
 {
 	struct proc_info_list *list;
@@ -709,6 +733,7 @@ static void __init setup_processor(void)
 	printk("CPU: %s [%08x] revision %d (ARMv%s), cr=%08lx\n",
 	       cpu_name, read_cpuid_id(), read_cpuid_id() & 15,
 	       proc_arch[cpu_architecture()], cr_alignment);
+	// cr_alignment: 0x10c5387d
 
 	// init_utsname()->machine: "arm", __NEW_UTS_LEN: 64
 	// list->arch_name: "armv7", ENDIANNESS: 'l'
@@ -719,12 +744,18 @@ static void __init setup_processor(void)
 		 list->elf_name, ENDIANNESS);
 	
 	// HWCAP_SWP | HWCAP_HALF | HWCAP_THUMB | HWCAP_FAST_MULT | HWCAP_EDSP | HWCAP_TLS
+	// elf_hwcap: HWCAP_SWP | HWCAP_HALF | HWCAP_THUMB | HWCAP_FAST_MULT | HWCAP_EDSP | HWCAP_TLS
 	// elf와 hwcap 이름의 관계?
 	// http://blee74.tistory.com/entry/setupprocessor-archarmkernelsetupc
 	elf_hwcap = list->elf_hwcap;
+	// HWCAP_SWP: 0x1, HWCAP_HALF: 0x2, HWCAP_THUMB: 0x4, HWCAP_FAST_MULT: 0x10 
+	// HWCAP_EDSP: 0x80, HWCAP_TLS: 0x8000
+	// elf_hwcap: 0x8097
 
-	// elf_hwcap |= HWCAP_IDIVA | HWCAP_IDIVT;
+	// elf_hwcap |= HWCAP_IDIVA(HWCAP_IDIVT);
 	cpuid_init_hwcaps();
+	// HWCAP_IDIVA: 0x20000, HWCAP_IDIVT: 0x40000	
+	// elf_hwcap: 0x28097 or 0x48097
 
 #ifndef CONFIG_ARM_THUMB // CONFIG_ARM_THUMB = n
 	elf_hwcap &= ~(HWCAP_THUMB | HWCAP_IDIVT);

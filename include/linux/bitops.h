@@ -10,7 +10,10 @@
 // ARM10C 20140118
 // ARM10C 20140301
 #define BIT_WORD(nr)		((nr) / BITS_PER_LONG)
+// KID 20140113
 #define BITS_PER_BYTE		8
+// KID 20140113
+// BITS_PER_BYTE: 8
 #define BITS_TO_LONGS(nr)	DIV_ROUND_UP(nr, BITS_PER_BYTE * sizeof(long))
 #endif
 
@@ -166,6 +169,7 @@ static inline __s32 sign_extend32(__u32 value, int index)
 	return (__s32)(value << shift) >> shift;
 }
 
+// PRE-KID 20140228
 // ARM10C 20140301
 // fls_long(31)
 // fls_long(10)

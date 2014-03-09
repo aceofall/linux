@@ -147,6 +147,8 @@ extern void bitmap_copy_le(void *dst, const unsigned long *src, int nbits);
 extern int bitmap_ord_to_pos(const unsigned long *bitmap, int n, int bits);
 
 #define BITMAP_FIRST_WORD_MASK(start) (~0UL << ((start) % BITS_PER_LONG))
+
+// KID 20140114
 // ARM10C 20140215
 // BITS_PER_LONG: 32
 // BITMAP_LAST_WORD_MASK(4): 0xF
@@ -160,6 +162,8 @@ extern int bitmap_ord_to_pos(const unsigned long *bitmap, int n, int bits);
 
 // ARM10C 20130831
 // 연산자 우선 순위 : <= 이 && 보다 먼저 수행됨
+// KID 20140113
+// BITS_PER_LONG: 32
 // ARM10C 20140215
 // nbits: 4
 // ARM10C 20140301
@@ -252,6 +256,7 @@ static inline void bitmap_complement(unsigned long *dst, const unsigned long *sr
 		__bitmap_complement(dst, src, nbits);
 }
 
+// KID 20140113
 static inline int bitmap_equal(const unsigned long *src1,
 			const unsigned long *src2, int nbits)
 {

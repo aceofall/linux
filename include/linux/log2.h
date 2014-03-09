@@ -27,7 +27,8 @@ int ____ilog2_NaN(void);
  *   more efficiently than using fls() and fls64()
  * - the arch is not required to handle n==0 if implementing the fallback
  */
-#ifndef CONFIG_ARCH_HAS_ILOG2_U32
+#ifndef CONFIG_ARCH_HAS_ILOG2_U32 // CONFIG_ARCH_HAS_ILOG2_U32=n
+// PRE-KID 20140228
 static inline __attribute__((const))
 int __ilog2_u32(u32 n)
 {
@@ -58,6 +59,7 @@ bool is_power_of_2(unsigned long n)
 /*
  * round up to nearest power of two
  */
+// PRE-KID 20140228
 // ARM10C 20140301
 // __roundup_pow_of_two(32)
 static inline __attribute__((const))
@@ -71,6 +73,7 @@ unsigned long __roundup_pow_of_two(unsigned long n)
 /*
  * round down to nearest power of two
  */
+// PRE-KID 20140228
 // ARM10C 20140301
 // __rounddown_pow_of_two(10)
 static inline __attribute__((const))
@@ -90,6 +93,7 @@ unsigned long __rounddown_pow_of_two(unsigned long n)
  *
  * selects the appropriately-sized optimised version depending on sizeof(n)
  */
+// PRE-KID 20140228
 #define ilog2(n)				\
 (						\
 	__builtin_constant_p(n) ? (		\
@@ -173,6 +177,7 @@ unsigned long __rounddown_pow_of_two(unsigned long n)
  * - the result is undefined when n == 0
  * - this can be used to initialise global variables from constant data
  */
+// PRE-KID 20140228
 // ARM10C 20140301
 // roundup_pow_of_two(32)
 #define roundup_pow_of_two(n)			\
@@ -193,6 +198,7 @@ unsigned long __rounddown_pow_of_two(unsigned long n)
  * - this can be used to initialise global variables from constant data
  */
 // ARM10C 20140111
+// PRE-KID 20140228
 // ARM10C 20140301
 // rounddown_pow_of_two(10)
 #define rounddown_pow_of_two(n)			\

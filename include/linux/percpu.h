@@ -62,6 +62,7 @@
  * preallocate for this.  Keep PERCPU_DYNAMIC_RESERVE equal to or
  * larger than PERCPU_DYNAMIC_EARLY_SIZE.
  */
+// PRE-KID 20140228
 // ARM10C 20140301
 #define PERCPU_DYNAMIC_EARLY_SLOTS	128
 // ARM10C 20140222

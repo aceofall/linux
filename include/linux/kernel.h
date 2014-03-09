@@ -22,6 +22,7 @@
 // INT_MAX 0x7FFFFFFF
 #define INT_MAX		((int)(~0U>>1))
 #define INT_MIN		(-INT_MAX - 1)
+// PRE-KID 20140228
 // ARM10C 20140301
 // UINT_MAX: 0xFFFFFFFF
 #define UINT_MAX	(~0U)
@@ -48,7 +49,8 @@
 #define PTR_ALIGN(p, a)		((typeof(p))ALIGN((unsigned long)(p), (a)))
 #define IS_ALIGNED(x, a)		(((x) & ((typeof(x))(a) - 1)) == 0)
 
-// ARM10C 20140301 
+// KID 20140203
+// ARM10C 20140301
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]) + __must_be_array(arr))
 
 /*
@@ -67,6 +69,7 @@
 
 #define FIELD_SIZEOF(t, f) (sizeof(((t*)0)->f))
 // ARM10C 20131207
+// KID 20140113
 #define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
 #define DIV_ROUND_UP_ULL(ll,d) \
 	({ unsigned long long _tmp = (ll)+(d)-1; do_div(_tmp, d); _tmp; })
@@ -424,6 +427,7 @@ extern int root_mountflags;
 extern bool early_boot_irqs_disabled;
 
 /* Values used for system_state */
+// KID 20140114
 // ARM10C 20140308
 extern enum system_states {
 	SYSTEM_BOOTING,

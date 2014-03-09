@@ -107,6 +107,7 @@ static inline int __test_and_change_bit(int nr,
  * @nr: bit number to test
  * @addr: Address to start counting from
  */
+// PRE-KID 20140228
 // ARM10C 20140301
 // test_bit(0, cpu_possible_mask->bits)
 static inline int test_bit(int nr, const volatile unsigned long *addr)

@@ -373,6 +373,7 @@ EXPORT_SYMBOL(bitmap_find_next_zero_area);
  * comma-separated sets of eight digits per set.  Returns the number of
  * characters which were written to *buf, excluding the trailing \0.
  */
+// PRE-KID 20140228
 // ARM10C 20140301
 // len: 4096, cpumask_bits(cpu_possible_bits): 0xF, nr_cpumask_bits: 4
 int bitmap_scnprintf(char *buf, unsigned int buflen,
@@ -395,6 +396,7 @@ int bitmap_scnprintf(char *buf, unsigned int buflen,
 	i = ALIGN(nmaskbits, CHUNKSZ) - CHUNKSZ;
 	// i = 0
 
+	// CHUNKSZ: 32
 	for (; i >= 0; i -= CHUNKSZ) {
 		// chunksz: 4
 		chunkmask = ((1ULL << chunksz) - 1);

@@ -94,6 +94,7 @@
 #ifdef CONFIG_DEBUG_SPINLOCK
   extern void __raw_spin_lock_init(raw_spinlock_t *lock, const char *name,
 				   struct lock_class_key *key);
+// KID 20140203
 # define raw_spin_lock_init(lock)				\
 do {								\
 	static struct lock_class_key __key;	/* struct lock_class_key { }; */	\
@@ -141,6 +142,7 @@ do {								\
 #ifdef CONFIG_DEBUG_SPINLOCK	// ARM10C Y 
  extern void do_raw_spin_lock(raw_spinlock_t *lock) __acquires(lock);
 #define do_raw_spin_lock_flags(lock, flags) do_raw_spin_lock(lock)
+ // KID 20140114
  extern int do_raw_spin_trylock(raw_spinlock_t *lock);	// ARM10C this 
  extern void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock);
 #else
@@ -251,6 +253,7 @@ static inline void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock)
 	1 : ({ local_irq_enable(); 0;  }); \
 })
 
+// KID 20140114
 #define raw_spin_trylock_irqsave(lock, flags) \
 ({ \
 	local_irq_save(flags); \

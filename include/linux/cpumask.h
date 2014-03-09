@@ -13,6 +13,8 @@
 
 // ARM10C 20130831
 // struct cpumask { bits[1]; }
+// KID 20140113
+// NR_CPUS: 4
 typedef struct cpumask { DECLARE_BITMAP(bits, NR_CPUS); } cpumask_t;
 
 /**
@@ -22,6 +24,7 @@ typedef struct cpumask { DECLARE_BITMAP(bits, NR_CPUS); } cpumask_t;
  * You should only assume nr_cpu_ids bits of this mask are valid.  This is
  * a macro so it's const-correct.
  */
+// KID 20140203
 // ARM10C 20140215
 // ARM10C 20140222
 #define cpumask_bits(maskp) ((maskp)->bits)
@@ -39,6 +42,7 @@ extern int nr_cpu_ids;
  * not all bits may be allocated. */
 #define nr_cpumask_bits	nr_cpu_ids
 #else
+// KID 20140113
 // ARM10C 20140215
 // NR_CPUS: 4
 // nr_cpumask_bits: 4
@@ -99,6 +103,7 @@ extern const struct cpumask *const cpu_active_mask;
 #define num_present_cpus()	cpumask_weight(cpu_present_mask)
 #define num_active_cpus()	cpumask_weight(cpu_active_mask)
 #define cpu_online(cpu)		cpumask_test_cpu((cpu), cpu_online_mask)
+// PRE-KID 20140228
 // ARM10C 20140301
 // cpu_possible(0): cpumask_test_cpu((0), cpu_possible_mask): 1
 #define cpu_possible(cpu)	cpumask_test_cpu((cpu), cpu_possible_mask)
@@ -116,6 +121,7 @@ extern const struct cpumask *const cpu_active_mask;
 #endif
 
 /* verify cpu argument to cpumask_* operators */
+// KID 20140203
 // ARM10C 20130907
 // ARM10C 20140301
 // nr_cpumask_bits: 4
@@ -301,6 +307,7 @@ static inline void cpumask_clear_cpu(int cpu, struct cpumask *dstp)
  *
  * No static inline type checking - see Subtlety (1) above.
  */
+// PRE-KID 20140228
 // ARM10C 20140301
 // cpumask_test_cpu((0), cpu_possible_mask)
 // test_bit(cpumask_check(0), cpumask_bits((cpu_possible_mask)))
@@ -431,9 +438,11 @@ static inline void cpumask_complement(struct cpumask *dstp,
  * @src1p: the first input
  * @src2p: the second input
  */
+// KID 20140113
 static inline bool cpumask_equal(const struct cpumask *src1p,
 				const struct cpumask *src2p)
 {
+        // nr_cpumask_bits: 4
 	return bitmap_equal(cpumask_bits(src1p), cpumask_bits(src2p),
 						 nr_cpumask_bits);
 }
@@ -562,6 +571,7 @@ static inline void cpumask_copy(struct cpumask *dstp,
  * cpumask_of - the cpumask containing just a given cpu
  * @cpu: the cpu (<= nr_cpu_ids)
  */
+// KID 20140113
 #define cpumask_of(cpu) (get_cpu_mask(cpu))
 
 /**
@@ -573,6 +583,7 @@ static inline void cpumask_copy(struct cpumask *dstp,
  * If len is zero, returns zero.  Otherwise returns the length of the
  * (nul-terminated) @buf string.
  */
+// PRE-KID 20140228
 // ARM10C 20140301
 // sizeof(cpus_buf): 4096 cpu_possible_mask: cpu_possible_bits: 0xF
 static inline int cpumask_scnprintf(char *buf, int len,
@@ -804,8 +815,10 @@ static inline int __check_is_bitmap(const unsigned long *bitmap)
 extern const unsigned long
 	cpu_bit_bitmap[BITS_PER_LONG+1][BITS_TO_LONGS(NR_CPUS)];
 
+// KID 20140113
 static inline const struct cpumask *get_cpu_mask(unsigned int cpu)
 {
+        // BITS_PER_LONG: 32
 	const unsigned long *p = cpu_bit_bitmap[1 + cpu % BITS_PER_LONG];
 	p -= cpu / BITS_PER_LONG;
 	return to_cpumask(p);
