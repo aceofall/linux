@@ -44,6 +44,15 @@
 //  ({ unsigned long __ptr;
 //  __asm__ ("" : "=r"(__ptr) : "0"((struct per_cpu_pageset __kernel __force *)(&boot_pageset)));
 //  (typeof((struct per_cpu_pageset __kernel __force *)(&boot_pageset))) (__ptr + ((__per_cpu_offset[0]))); })
+//
+// ARM10C 20140405
+// RELOC_HIDE((typeof(*(&(vm_event_states.event[PGFREE]))) __kernel __force *)(&(vm_event_states.event[PGFREE])), (__my_cpu_offset)):
+// &(vm_event_states.event[PGFREE]) + __my_cpu_offset
+//
+// #define RELOC_HIDE((typeof(*(&(vm_event_states.event[PGFREE]))) __kernel __force *)(&(vm_event_states.event[PGFREE])), __my_cpu_offset)
+//  ({ unsigned long __ptr;
+//  __asm__ ("" : "=r"(__ptr) : "0"((typeof(*(&(vm_event_states.event[PGFREE]))) __kernel __force *)(&(vm_event_states.event[PGFREE]))));
+//  (typeof((typeof(*(&(vm_event_states.event[PGFREE]))) __kernel __force *)(&(vm_event_states.event[PGFREE])))) (__ptr + (__my_cpu_offset)); })
 #define RELOC_HIDE(ptr, off)					\
   ({ unsigned long __ptr;					\
     __asm__ ("" : "=r"(__ptr) : "0"(ptr));		\
@@ -109,6 +118,8 @@
 #define __aligned(x)			__attribute__((aligned(x)))
 #define __printf(a, b)			__attribute__((format(printf, a, b)))
 #define __scanf(a, b)			__attribute__((format(scanf, a, b)))
+// ARM10C 20140315
+// 절대로 inline으로 사용하지 말라는 의미
 #define  noinline			__attribute__((noinline))
 #define __attribute_const__		__attribute__((__const__))
 #define __maybe_unused			__attribute__((unused))
@@ -127,6 +138,7 @@
  * A trick to suppress uninitialized variable warning without generating any
  * code
  */
+// ARM10C 20140405
 #define uninitialized_var(x) x = x
 
 #define __always_inline		inline __attribute__((always_inline))

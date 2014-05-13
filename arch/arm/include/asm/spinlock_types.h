@@ -10,6 +10,9 @@
 
 // KID 20140114
 // ARM10C 20140125
+// ARM10C 20140315
+// ARM10C 20140419
+// sizeof(arch_spinlock_t) : 4 byte
 typedef struct {
         union {
                 u32 slock;
@@ -26,6 +29,7 @@ typedef struct {
 } arch_spinlock_t;
 
 // KID 20140114
+// ARM10C 20140315
 #define __ARCH_SPIN_LOCK_UNLOCKED	{ { 0 } }
 
 typedef struct {

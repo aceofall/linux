@@ -52,25 +52,43 @@ pmd_t *top_pmd;
 #define CPOLICY_UNCACHED	0
 #define CPOLICY_BUFFERED	1
 #define CPOLICY_WRITETHROUGH	2
+// KID 20140321
 #define CPOLICY_WRITEBACK	3
 #define CPOLICY_WRITEALLOC	4
 
+// KID 20140321
+// CPOLICY_WRITEBACK: 3
+// cachepolicy: 4
 static unsigned int cachepolicy __initdata = CPOLICY_WRITEBACK;
 // ARM10C 20131102
+// KID 20140326
 static unsigned int ecc_mask __initdata = 0;
 // ARM10C 20131102
+// KID 20140326
+// pgprot_user: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41F)
 pgprot_t pgprot_user;
 // ARM10C 20131102
+// KID 20140326
+// pgprot_kernel: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x45f)
 pgprot_t pgprot_kernel;
+// KID 20140326
+// pgprot_hyp_device: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+//		      L_PTE_MT_DEV_SHARED | L_PTE_SHARED, (0x653)
 pgprot_t pgprot_hyp_device;
 // ARM10C 20131102
+// KID 20140326
+// pgprot_s2: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_SHARED (0x403)
 pgprot_t pgprot_s2;
+// KID 20140326
+// pgprot_s2_device: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+//		     L_PTE_MT_DEV_SHARED | L_PTE_SHARED, (0x653)
 pgprot_t pgprot_s2_device;
 
 EXPORT_SYMBOL(pgprot_user);
 EXPORT_SYMBOL(pgprot_kernel);
 
 // ARM10C 20131026
+// KID 20140320
 struct cachepolicy {
 	const char	policy[16];
 	unsigned int	cr_mask;
@@ -87,6 +105,68 @@ struct cachepolicy {
 #endif
 
 // ARM10C 20131026
+// KID 20140321
+// KID 20140325
+// PMD_SECT_WB: (PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE)
+// PMD_SECT_WBWA: (PMD_SECT_TEX(1) | PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE)
+//
+// CR_C: 0x4, CR_W: 0x8	
+// PMD_SECT_UNCACHED: 0x0, PMD_SECT_BUFFERED: 0x4, PMD_SECT_WT: 0x8
+// PMD_SECT_WB: 0xC, PMD_SECT_WBWA: 0x100C
+// L_PTE_MT_UNCACHED: 0x0, L_PTE_MT_BUFFERABLE: 0x4, L_PTE_MT_WRITETHROUGH: 0x8
+// L_PTE_MT_WRITEBACK: 0xC, L_PTE_MT_WRITEALLOC: 0x1C
+//
+//
+// CPOLICY_UNCACHED: 0
+// cache_policies[CPOLICY_UNCACHED] =
+// {
+//	.policy		= "uncached",
+//	.cr_mask	= CR_W|CR_C, (0xC)
+//	.pmd		= PMD_SECT_UNCACHED, (0x0)
+//	.pte		= L_PTE_MT_UNCACHED, (0x0)
+//	.pte_s2		= 0,
+// }
+//
+// CPOLICY_BUFFERED: 1
+// cache_policies[CPOLICY_BUFFERED] =
+// {
+//	.policy		= "buffered",
+//	.cr_mask	= CR_C, (0x4)
+//	.pmd		= PMD_SECT_BUFFERED, (0x4)
+//	.pte		= L_PTE_MT_BUFFERABLE, (0x4)
+//	.pte_s2		= 0,
+// }
+//
+// CPOLICY_WRITETHROUGH: 2
+// cache_policies[CPOLICY_WRITETHROUGH] =
+// {
+//	.policy		= "writethrough",
+//	.cr_mask	= 0,
+//	.pmd		= PMD_SECT_WT, (0x8)
+//	.pte		= L_PTE_MT_WRITETHROUGH, (0x8)
+//	.pte_s2		= 0,
+// }
+//
+// CPOLICY_WRITEBACK: 3
+// cache_policies[CPOLICY_WRITEBACK] =
+// {
+//	.policy		= "writeback",
+//	.cr_mask	= 0,
+//	.pmd		= PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE, (0xC)
+//	.pte		= L_PTE_MT_WRITEBACK, (0xC)
+//	.pte_s2		= 0,
+// }
+//
+// CPOLICY_WRITEALLOC: 4
+// cache_policies[CPOLICY_WRITEALLOC] =
+// {
+//	.policy		= "writealloc",
+//	.cr_mask	= 0,
+//	.pmd		= PMD_SECT_TEX(1) | PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE, (0x100C)
+//	.pte		= L_PTE_MT_WRITEALLOC, (0x1C)
+//	.pte_s2		= 0,
+// }
+//
 static struct cachepolicy cache_policies[] __initdata = {
 	{
 		.policy		= "uncached",
@@ -238,10 +318,188 @@ __setup("noalign", noalign_setup);
 
 #endif /* ifdef CONFIG_CPU_CP15 / else */
 
+// KID 20140321
+// L_PTE_PRESENT: 0x1, L_PTE_YOUNG: 0x2, L_PTE_DIRTY: 0x40, L_PTE_XN: 0x200
+// PROT_PTE_DEVICE: 0x243
 #define PROT_PTE_DEVICE		L_PTE_PRESENT|L_PTE_YOUNG|L_PTE_DIRTY|L_PTE_XN
+// KID 20140321
+// PMD_TYPE_SECT: 0x2, PMD_SECT_AP_WRITE: 0x400
+// PROT_SECT_DEVICE: 0x402
 #define PROT_SECT_DEVICE	PMD_TYPE_SECT|PMD_SECT_AP_WRITE
 
 // ARM10C 20131026
+// KID 20140320
+// PROT_PTE_DEVICE: 0x243,
+// L_PTE_PRESENT: 0x1, L_PTE_YOUNG: 0x2, L_PTE_DIRTY: 0x40, L_PTE_XN: 0x200
+// L_PTE_MT_DEV_SHARED: 0x10, L_PTE_SHARED: 0x400 L_PTE_MT_DEV_NONSHARED: 0x30,
+// L_PTE_MT_DEV_CACHED: 0x2c, L_PTE_MT_DEV_WC: 0x24, L_PTE_RDONLY: 0x80, L_PTE_USER: 0x100
+// L_PTE_MT_BUFFERABLE: 0x4, L_PTE_MT_UNCACHED: 0x0
+// PMD_TYPE_SECT: 0x2, PMD_SECT_AP_WRITE: 0x400
+// PMD_TYPE_TABLE: 0x1, PROT_SECT_DEVICE: 0x402, PMD_SECT_S: 0x10000, 
+// PMD_SECT_WB: 0xC, PMD_SECT_XN: 0x10, PMD_SECT_UNCACHED: 0x0, PMD_SECT_MINICACHE: 0x1008
+// DOMAIN_KERNEL: 0, DOMAIN_USER: 0x1, DOMAIN_IO: 0x2
+// PMD_DOMAIN(DOMAIN_KERNEL): 0x0, PMD_DOMAIN(DOMAIN_USER): 0x20, PMD_DOMAIN(DOMAIN_IO): 0x40
+//
+// [Strongly ordered / ARMv6 shared device] - MT_DEVICE: 0
+// mem_types[MT_DEVICE] =
+// {
+// 	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+//			  L_PTE_MT_DEV_SHARED | L_PTE_SHARED, (0x653)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_IO), (0x41)
+// 	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_S | PMD_SECT_XN |
+//			  PMD_SECT_TEX(1) | PMD_DOMAIN(DOMAIN_IO), (0x11452)
+// 	.domain		= DOMAIN_IO, (0x2)
+// }
+//
+// [ ARMv6 non-shared device ] - MT_DEVICE_NONSHARED: 1
+// mem_types[MT_DEVICE_NONSHARED] =
+// {
+// 	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+//			  L_PTE_MT_DEV_NONSHARED, (0x273)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_IO), (0x41)
+// 	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_XN | PMD_SECT_TEX(1) |
+//			  PMD_DOMAIN(DOMAIN_IO), (0x1452)
+// 	.domain		= DOMAIN_IO, (0x2)
+// }
+//
+// [ ioremap_cached ] - MT_DEVICE_CACHED: 2
+// mem_types[MT_DEVICE_CACHED] =
+// {
+// 	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+//			  L_PTE_MT_DEV_CACHED | L_PTE_SHARED, (0x66F)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_IO), (0x41)
+// 	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_WB | PMD_SECT_XN |
+//			  PMD_SECT_S | PMD_DOMAIN(DOMAIN_IO), (0x1045e)
+// 	.domain		= DOMAIN_IO, (0x2)
+// }
+//
+// [ ioremap_wc ] - MT_DEVICE_WC: 3
+// mem_types[MT_DEVICE_WC] =
+// {
+// 	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+//			  L_PTE_MT_DEV_WC | L_PTE_SHARED, (0x667)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_IO), (0x41)
+// 	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_XN |
+//			  PMD_SECT_BUFFERABLE | PMD_SECT_S | PMD_DOMAIN(DOMAIN_IO), (0x10456)
+// 	.domain		= DOMAIN_IO, (0x2)
+// }
+//
+// MT_UNCACHED: 4
+// mem_types[MT_UNCACHED] =
+// {
+// 	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN, (0x243)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_IO), (0x41)
+// 	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_XN | PMD_DOMAIN(DOMAIN_IO), (0x52)
+// 	.domain		= DOMAIN_IO, (0x2)
+// }
+//
+// MT_CACHECLEAN: 5
+// mem_types[MT_CACHECLEAN] =
+// {
+// 	.prot_l1	= PMD_DOMAIN(DOMAIN_KERNEL), (0x0)
+// 	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_XN | PMD_SECT_APX | PMD_SECT_AP_WRITE |
+//			  PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE | PMD_DOMAIN(DOMAIN_KERNEL), (0x841e)
+// 	.domain		= DOMAIN_KERNEL, (0x0)
+// }
+//
+// MT_MINICLEAN: 6
+// mem_types[MT_MINICLEAN] =
+// {
+// 	.prot_l1	= PMD_DOMAIN(DOMAIN_KERNEL), (0x0)
+//	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_XN | PMD_SECT_MINICACHE |
+//			  PMD_SECT_APX | PMD_SECT_AP_WRITE | PMD_DOMAIN(DOMAIN_KERNEL), (0x901a)
+// 	.domain		= DOMAIN_KERNEL, (0x0)
+// }
+//
+// MT_LOW_VECTORS: 7
+// mem_types[MT_LOW_VECTORS] =
+// {
+//	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_RDONLY | L_PTE_MT_WRITEALLOC |
+//			  L_PTE_SHARED, (0x4df)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_USER), (0x21)
+//	.prot_sect	= PMD_DOMAIN(DOMAIN_USER), (0x20)
+//	.domain		= DOMAIN_USER, (0x1)
+// }
+//
+// MT_HIGH_VECTORS: 8
+// mem_types[MT_HIGH_VECTORS] =
+// {
+//	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_USER |
+//			  L_PTE_RDONLY, (0x1c3)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_USER), (0x21)
+//	.prot_sect	= PMD_DOMAIN(DOMAIN_USER), (0x20)
+//	.domain		= DOMAIN_USER, (0x1)
+// }
+//
+// MT_MEMORY: 9
+// mem_types[MT_MEMORY] =
+// {
+//	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_SHARED |
+//			  L_PTE_MT_WRITEALLOC, (0x45f)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_KERNEL), (0x1)
+//	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_S | PMD_SECT_TEX(1) |
+//			  PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE | PMD_DOMAIN(DOMAIN_KERNEL), (0x1140e)
+//	.domain		= DOMAIN_KERNEL, (0x0)
+// }
+//
+// MT_ROM: 10
+// mem_types[MT_ROM] =
+// {
+// 	.prot_l1	= PMD_DOMAIN(DOMAIN_KERNEL), (0x0)
+//	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_APX | PMD_SECT_AP_WRITE | PMD_SECT_TEX(1) |
+//			  PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE | PMD_DOMAIN(DOMAIN_KERNEL), (0x940e)
+//	.domain		= DOMAIN_KERNEL, (0x0)
+// }
+//
+// MT_MEMORY_NONCACHED: 11
+// mem_types[MT_MEMORY_NONCACHED] =
+// {
+//	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY |
+//			  L_PTE_MT_BUFFERABLE | L_PTE_SHARED, (0x447)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_KERNEL), (0x1)
+//	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_S |
+//			  PMD_SECT_BUFFERED | PMD_DOMAIN(DOMAIN_KERNEL), (0x10406)
+//	.domain		= DOMAIN_KERNEL, (0x0)
+// }
+//
+// MT_MEMORY_DTCM: 12
+// mem_types[MT_MEMORY_DTCM] =
+// {
+//	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN, (0x243)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_KERNEL), (0x1)
+//	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_XN | PMD_DOMAIN(DOMAIN_KERNEL), (0x12)
+//	.domain		= DOMAIN_KERNEL, (0x0)
+// }
+//
+// MT_MEMORY_ITCM: 13
+// mem_types[MT_MEMORY_ITCM] =
+// {
+//	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY, (0x43)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_KERNEL), (0x1)
+//	.prot_sect	= PMD_DOMAIN(DOMAIN_KERNEL), (0x0)
+//	.domain		= DOMAIN_KERNEL, (0x0)
+// }
+//
+// MT_MEMORY_SO: 14
+// mem_types[MT_MEMORY_SO] =
+// {
+//	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_MT_UNCACHED |
+//			  L_PTE_XN, (0x243)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_KERNEL), (0x1)
+//	.prot_sect	= PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_S |
+//			  PMD_SECT_UNCACHED | PMD_SECT_XN | PMD_DOMAIN(DOMAIN_KERNEL), (0x10412)
+//	.domain		= DOMAIN_KERNEL, (0x0)
+// }
+//
+// MT_MEMORY_DMA_READY: 15
+// mem_types[MT_MEMORY_DMA_READY] =
+// {
+//	.prot_pte	= L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_SHARED |
+//			  L_PTE_MT_WRITEALLOC, (0x45f)
+// 	.prot_l1	= PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_KERNEL), (0x1)
+//	.prot_sect	= PMD_DOMAIN(DOMAIN_KERNEL), (0x0)
+//	.domain		= DOMAIN_KERNEL, (0x0)
+// }
 static struct mem_type mem_types[] = {
 	[MT_DEVICE] = {		  /* Strongly ordered / ARMv6 shared device */
 		.prot_pte	= PROT_PTE_DEVICE | L_PTE_MT_DEV_SHARED |
@@ -351,16 +609,19 @@ EXPORT_SYMBOL(get_mem_type);
  * Adjust the PMD section entries according to the CPU in use.
  */
 // ARM10C 20131026
+// KID 20140320
 static void __init build_mem_type_table(void)
 {
 	struct cachepolicy *cp;
 	unsigned int cr = get_cr(); // cr = system control register.
+	// cr: 0x70c7387d
 	pteval_t user_pgprot, kern_pgprot, vecs_pgprot;
 	pteval_t hyp_device_pgprot, s2_pgprot, s2_device_pgprot;
-	// cpu_arch: CPU_ARCH_ARMv7: 9
 	int cpu_arch = cpu_architecture();
+	// cpu_arch: CPU_ARCH_ARMv7: 9
 	int i;
 
+	// cpu_arch: CPU_ARCH_ARMv7: 9, CPU_ARCH_ARMv6: 8
 	if (cpu_arch < CPU_ARCH_ARMv6) {
 #if defined(CONFIG_CPU_DCACHE_DISABLE) // CONFIG_CPU_DCACHE_DISABLE=n
 		if (cachepolicy > CPOLICY_BUFFERED)
@@ -370,25 +631,32 @@ static void __init build_mem_type_table(void)
 			cachepolicy = CPOLICY_WRITETHROUGH;
 #endif
 	}
+
+	// cpu_arch: CPU_ARCH_ARMv7: 9, CPU_ARCH_ARMv5: 4
 	if (cpu_arch < CPU_ARCH_ARMv5) {
 		if (cachepolicy >= CPOLICY_WRITEALLOC)
 			cachepolicy = CPOLICY_WRITEBACK;
 		ecc_mask = 0;
 	}
+
+	// is_smp(): 1
 	if (is_smp())
 		// CPOLICY_WRITEALLOC: 4
 		cachepolicy = CPOLICY_WRITEALLOC;
+		// cachepolicy: 4
 
 	/*
 	 * Strip out features not present on earlier architectures.
 	 * Pre-ARMv5 CPUs don't have TEX bits.  Pre-ARMv6 CPUs or those
 	 * without extended page tables don't have the 'Shared' bit.
 	 */
+	// cpu_arch: CPU_ARCH_ARMv7: 9, CPU_ARCH_ARMv5: 4
 	if (cpu_arch < CPU_ARCH_ARMv5)
 		for (i = 0; i < ARRAY_SIZE(mem_types); i++)
 			mem_types[i].prot_sect &= ~PMD_SECT_TEX(7);
 
-    // CR_XP는 reserved 되어 있어서 for에 안들어 감.
+	// cr: 0x70c7387d, CR_XP: 0x800000, (cr & CR_XP): 0x800000, cpu_is_xsc3(): 0
+	// CR_XP는 reserved 되어 있어서 for에 안들어 감.
 	if ((cpu_arch < CPU_ARCH_ARMv6 || !(cr & CR_XP)) && !cpu_is_xsc3())
 		for (i = 0; i < ARRAY_SIZE(mem_types); i++)
 			mem_types[i].prot_sect &= ~PMD_SECT_S;
@@ -398,6 +666,8 @@ static void __init build_mem_type_table(void)
 	 * "update-able on write" bit on ARM610).  However, Xscale and
 	 * Xscale3 require this bit to be cleared.
 	 */
+
+	// cpu_is_xscale(): 0, cpu_is_xsc3(): 0, cpu_arch: CPU_ARCH_ARMv7: 9, CPU_ARCH_ARMv6: 8
 	if (cpu_is_xscale() || cpu_is_xsc3()) {
 		for (i = 0; i < ARRAY_SIZE(mem_types); i++) {
 			mem_types[i].prot_sect &= ~PMD_BIT4;
@@ -415,26 +685,44 @@ static void __init build_mem_type_table(void)
 	/*
 	 * Mark the device areas according to the CPU/architecture.
 	 */
-	// CR_XP: (1 << 23) - Extended page tables
 	// A.R.M: B4.1.130 - SCTLR, System Control Register, VMSA
-	// (cr & CR_XP): 1
+	// CR_XP: 0x800000 - Extended page tables
+	// cr: 0x70c7387d, (cr & CR_XP): 0x800000
+	// cpu_arch: CPU_ARCH_ARMv7: 9, CPU_ARCH_ARMv6: 8
 	// v7_crval:
 	//	.word 0x2120c302  (r5) (clear)
 	//	.word 0x10c03c7d  (r6) (mmuset)
 	if (cpu_is_xsc3() || (cpu_arch >= CPU_ARCH_ARMv6 && (cr & CR_XP))) {
+		// cpu_is_xsc3(): 0
 		if (!cpu_is_xsc3()) {
 			/*
 			 * Mark device regions on ARMv6+ as execute-never
 			 * to prevent speculative instruction fetches.
 			 */
 			// XN: execute-never
+			// MT_DEVICE: 0, PMD_SECT_XN: 0x10,
+			// mem_types[MT_DEVICE].prot_sect: 0x10402
 			mem_types[MT_DEVICE].prot_sect |= PMD_SECT_XN;
+			// mem_types[MT_DEVICE].prot_sect: 0x10412
+
+			// MT_DEVICE_NONSHARED: 1, PMD_SECT_XN: 0x10,
+			// mem_types[MT_DEVICE_NONSHARED].prot_sect: 0x402
 			mem_types[MT_DEVICE_NONSHARED].prot_sect |= PMD_SECT_XN;
+			// mem_types[MT_DEVICE_NONSHARED].prot_sect: 0x412
+
+			// MT_DEVICE_CACHED: 2, PMD_SECT_XN: 0x10,
+			// mem_types[MT_DEVICE_CACHED].prot_sect: 0x40e
 			mem_types[MT_DEVICE_CACHED].prot_sect |= PMD_SECT_XN;
+			// mem_types[MT_DEVICE_CACHED].prot_sect: 0x41e
+
+			// MT_DEVICE_WC: 3, PMD_SECT_XN: 0x10,
+			// mem_types[MT_DEVICE_WC].prot_sect: 0x402
 			mem_types[MT_DEVICE_WC].prot_sect |= PMD_SECT_XN;
+			// mem_types[MT_DEVICE_WC].prot_sect: 0x412
 		}
 
-		// CR_TRE: (1 << 28) - TEX remap enable
+		// cpu_arch: CPU_ARCH_ARMv7: 9, CR_TRE: 0x10000000 - TEX remap enable
+		// cr: 0x70c7387d, (cr & CR_TRE): 0x10000000
 		if (cpu_arch >= CPU_ARCH_ARMv7 && (cr & CR_TRE)) {
 			/*
 			 * For ARMv7 with TEX remapping,
@@ -444,10 +732,22 @@ static void __init build_mem_type_table(void)
 			 * (Uncached Normal memory)
 			 */
 			// SXCB: S - shared, X - TEX[0], C - cachable, B - bufferable
-		    // PMD_SECT_TEX(x) (_AT(pmdval_t, (x)) << 12)
+			// PMD_SECT_TEX(x) (_AT(pmdval_t, (x)) << 12)
+
+			// MT_DEVICE: 0, PMD_SECT_TEX(1): 0x1000
+			// mem_types[MT_DEVICE].prot_sect: 0x10412
 			mem_types[MT_DEVICE].prot_sect |= PMD_SECT_TEX(1);
+			// mem_types[MT_DEVICE].prot_sect: 0x11412
+
+			// MT_DEVICE_NONSHARED: 1, PMD_SECT_TEX(1): 0x1000
+			// mem_types[MT_DEVICE_NONSHARED].prot_sect: 0x412
 			mem_types[MT_DEVICE_NONSHARED].prot_sect |= PMD_SECT_TEX(1);
+			// mem_types[MT_DEVICE_NONSHARED].prot_sect: 0x1412
+
+			// MT_DEVICE_WC: 3, PMD_SECT_BUFFERABLE: 0x4
+			// mem_types[MT_DEVICE_WC].prot_sect: 0x412
 			mem_types[MT_DEVICE_WC].prot_sect |= PMD_SECT_BUFFERABLE;
+			// mem_types[MT_DEVICE_WC].prot_sect: 0x416
 		} else if (cpu_is_xsc3()) {
 			/*
 			 * For Xscale3,
@@ -483,16 +783,29 @@ static void __init build_mem_type_table(void)
 	 */
 	// cachepolicy: 4 - CPOLICY_WRITEALLOC
 	cp = &cache_policies[cachepolicy];
-	// cp->pte: L_PTE_MT_WRITEALLOC
+
+	// cp->pte: cache_policies[CPOLICY_WRITEALLOC].pte: L_PTE_MT_WRITEALLOC (0x1C)
 	vecs_pgprot = kern_pgprot = user_pgprot = cp->pte;
-	// cp->pte_s2: 0 - s2_policy(L_PTE_S2_MT_WRITEBACK)
+	// vecs_pgprot: L_PTE_MT_WRITEALLOC (0x1C), kern_pgprot: L_PTE_MT_WRITEALLOC (0x1C),
+	// user_pgprot: L_PTE_MT_WRITEALLOC (0x1C)
+
+	// cp->pte_s2: cache_policies[CPOLICY_WRITEALLOC].pte_s2: 0
 	s2_pgprot = cp->pte_s2;
-	// mem_types[MT_DEVICE].prot_pte: PROT_PTE_DEVICE | L_PTE_MT_DEV_SHARED | L_PTE_SHARED,
+	// s2_pgprot: 0
+
+	// mem_types[MT_DEVICE].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+	//				  L_PTE_MT_DEV_SHARED | L_PTE_SHARED, (0x653)
 	hyp_device_pgprot = s2_device_pgprot = mem_types[MT_DEVICE].prot_pte;
+	// hyp_device_pgprot: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+	//		      L_PTE_MT_DEV_SHARED | L_PTE_SHARED, (0x653)
+	// s2_device_pgprot: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+	//		     L_PTE_MT_DEV_SHARED | L_PTE_SHARED, (0x653)
 
 	/*
 	 * ARMv6 and above have extended page tables.
 	 */
+	// cr: 0x70c7387d, (cr & CR_XP): 0x800000
+	// cpu_arch: CPU_ARCH_ARMv7: 9, CPU_ARCH_ARMv6: 8
 	if (cpu_arch >= CPU_ARCH_ARMv6 && (cr & CR_XP)) {
 #ifndef CONFIG_ARM_LPAE // CONFIG_ARM_LPAE=n
 		/*
@@ -501,30 +814,95 @@ static void __init build_mem_type_table(void)
 		 */
 		// A.R.M: B3.7 Memory access control
 		// PMD_SECT_APX - Access permission
+		// PMD_SECT_APX: 0x8000, PMD_SECT_AP_WRITE: 0x400
+		// mem_types[MT_ROM].prot_sect: PMD_TYPE_SECT (0x2)
 		mem_types[MT_ROM].prot_sect |= PMD_SECT_APX|PMD_SECT_AP_WRITE;
+		// mem_types[MT_ROM].prot_sect: PMD_TYPE_SECT | PMD_SECT_APX | PMD_SECT_AP_WRITE (0x8402)
+
+		// mem_types[MT_MINICLEAN].prot_sect: PMD_TYPE_SECT | PMD_SECT_XN | PMD_SECT_MINICACHE (0x101a)
 		mem_types[MT_MINICLEAN].prot_sect |= PMD_SECT_APX|PMD_SECT_AP_WRITE;
+		// mem_types[MT_MINICLEAN].prot_sect: PMD_TYPE_SECT | PMD_SECT_XN | PMD_SECT_MINICACHE |
+		//				      PMD_SECT_APX | PMD_SECT_AP_WRITE (0x901a)
+
+		// mem_types[MT_CACHECLEAN].prot_sect: PMD_TYPE_SECT | PMD_SECT_XN (0x12)
 		mem_types[MT_CACHECLEAN].prot_sect |= PMD_SECT_APX|PMD_SECT_AP_WRITE;
+		// mem_types[MT_CACHECLEAN].prot_sect: PMD_TYPE_SECT | PMD_SECT_XN |
+		//				       PMD_SECT_APX | PMD_SECT_AP_WRITE (0x8412)
 #endif
 
+		// is_smp(): 1
 		if (is_smp()) {
 			/*
 			 * Mark memory with the "shared" attribute
 			 * for SMP systems
 			 */
+			// L_PTE_SHARED: 0x400, PMD_SECT_S: 0x10000
 			// L_PTE_SHARED, PMD_SECT_S 설정
+
+			// user_pgprot: L_PTE_MT_WRITEALLOC (0x1C)
 			user_pgprot |= L_PTE_SHARED;
+			// user_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41C)
+
+			// kern_pgprot: L_PTE_MT_WRITEALLOC (0x1C)
 			kern_pgprot |= L_PTE_SHARED;
+			// kern_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41C)
+
+			// vecs_pgprot: L_PTE_MT_WRITEALLOC (0x1C)
 			vecs_pgprot |= L_PTE_SHARED;
+			// vecs_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41C)
+
+			// s2_pgprot: 0
 			s2_pgprot |= L_PTE_SHARED;
+			// s2_pgprot: L_PTE_SHARED (0x400)
+
+			// mem_types[MT_DEVICE_WC].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_XN |
+			//				      PMD_SECT_BUFFERABLE (0x416)
 			mem_types[MT_DEVICE_WC].prot_sect |= PMD_SECT_S;
+			// mem_types[MT_DEVICE_WC].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_XN |
+			//				      PMD_SECT_BUFFERABLE | PMD_SECT_S (0x10416)
+
+			// mem_types[MT_DEVICE_WC].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+			//				     L_PTE_MT_DEV_WC (0x267)
 			mem_types[MT_DEVICE_WC].prot_pte |= L_PTE_SHARED;
+			// mem_types[MT_DEVICE_WC].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+			//				     L_PTE_MT_DEV_WC | L_PTE_SHARED (0x667)
+
+			// mem_types[MT_DEVICE_CACHED].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_WB |
+			//					  PMD_SECT_XN (0x41e)
 			mem_types[MT_DEVICE_CACHED].prot_sect |= PMD_SECT_S;
+			// mem_types[MT_DEVICE_CACHED].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_WB |
+			//					  PMD_SECT_XN | PMD_SECT_S (0x1041e)
+
+			// mem_types[MT_DEVICE_CACHED].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+			//					 L_PTE_MT_DEV_CACHED (0x26F)
 			mem_types[MT_DEVICE_CACHED].prot_pte |= L_PTE_SHARED;
+			// mem_types[MT_DEVICE_CACHED].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+			//					 L_PTE_MT_DEV_CACHED | L_PTE_SHARED (0x66F)
+
+			// mem_types[MT_MEMORY].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE (0x402)
 			mem_types[MT_MEMORY].prot_sect |= PMD_SECT_S;
+			// mem_types[MT_MEMORY].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_S (0x10402)
+
+			// mem_types[MT_MEMORY].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY (0x43)
 			mem_types[MT_MEMORY].prot_pte |= L_PTE_SHARED;
+			// mem_types[MT_MEMORY].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY |
+			//				  L_PTE_SHARED (0x443)
+
+			// mem_types[MT_MEMORY_DMA_READY].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY (0x43)
 			mem_types[MT_MEMORY_DMA_READY].prot_pte |= L_PTE_SHARED;
+			// mem_types[MT_MEMORY_DMA_READY].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY |
+			//					    L_PTE_SHARED (0x443)
+
+			// mem_types[MT_MEMORY_NONCACHED].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE (0x402)
 			mem_types[MT_MEMORY_NONCACHED].prot_sect |= PMD_SECT_S;
+			// mem_types[MT_MEMORY_NONCACHED].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE |
+			//					     PMD_SECT_S (0x10402)
+
+			// mem_types[MT_MEMORY_NONCACHED].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY |
+			//					    L_PTE_MT_BUFFERABLE (0x47)
 			mem_types[MT_MEMORY_NONCACHED].prot_pte |= L_PTE_SHARED;
+			// mem_types[MT_MEMORY_NONCACHED].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY |
+			//					    L_PTE_MT_BUFFERABLE | L_PTE_SHARED (0x447)
 		}
 	}
 
@@ -532,12 +910,19 @@ static void __init build_mem_type_table(void)
 	 * Non-cacheable Normal - intended for memory areas that must
 	 * not cause dirty cache line writebacks when used
 	 */
+	// cpu_arch: CPU_ARCH_ARMv7: 9, CPU_ARCH_ARMv6: 8
 	if (cpu_arch >= CPU_ARCH_ARMv6) {
-		// CR_TRE: (1 << 28) - TEX remap enable
+		// cpu_arch: CPU_ARCH_ARMv7: 9, CR_TRE: 0x10000000 - TEX remap enable
+		// cr: 0x70c7387d, (cr & CR_TRE): 0x10000000
 		if (cpu_arch >= CPU_ARCH_ARMv7 && (cr & CR_TRE)) {
 			/* Non-cacheable Normal is XCB = 001 */
+			// PMD_SECT_BUFFERED: 0x4
+			// mem_types[MT_MEMORY_NONCACHED].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE |
+			//					     PMD_SECT_S (0x10402)
 			mem_types[MT_MEMORY_NONCACHED].prot_sect |=
 				PMD_SECT_BUFFERED;
+			// mem_types[MT_MEMORY_NONCACHED].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE |
+			//					     PMD_SECT_S | PMD_SECT_BUFFERED (0x10406)
 		} else {
 			/* For both ARMv6 and non-TEX-remapping ARMv7 */
 			mem_types[MT_MEMORY_NONCACHED].prot_sect |=
@@ -563,61 +948,127 @@ static void __init build_mem_type_table(void)
 	// user page protection 설정값 추가
 	for (i = 0; i < 16; i++) {
 		pteval_t v = pgprot_val(protection_map[i]);
+		// user_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41C)
 		protection_map[i] = __pgprot(v | user_pgprot);
 	}
 
 // 2013/10/26 종료
 // 2013/11/02 시작
-	// vecs_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED;
-	mem_types[MT_LOW_VECTORS].prot_pte |= vecs_pgprot;
-	mem_types[MT_HIGH_VECTORS].prot_pte |= vecs_pgprot;
 
-	// user_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED
+	// vecs_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41C)
+	// mem_types[MT_LOW_VECTORS].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_RDONLY (0xc3)
+	mem_types[MT_LOW_VECTORS].prot_pte |= vecs_pgprot;
+	// mem_types[MT_LOW_VECTORS].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_RDONLY |
+	//				       L_PTE_MT_WRITEALLOC | L_PTE_SHARED, (0x4df)
+
+	// vecs_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41C)
+	// mem_types[MT_HIGH_VECTORS].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_USER |
+	//					L_PTE_RDONLY (0x1c3)
+	mem_types[MT_HIGH_VECTORS].prot_pte |= vecs_pgprot;
+	// mem_types[MT_HIGH_VECTORS].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_USER |
+	//					L_PTE_RDONLY | L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x5df)
+
+	// L_PTE_PRESENT: 0x1, L_PTE_YOUNG: 0x2
+	// user_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41C)
 	pgprot_user   = __pgprot(L_PTE_PRESENT | L_PTE_YOUNG | user_pgprot);
-	// kern_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED
+	// pgprot_user: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41F)
+
+	// L_PTE_PRESENT: 0x1, L_PTE_YOUNG: 0x2, L_PTE_DIRTY: 0x40
+	// kern_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41C)
 	pgprot_kernel = __pgprot(L_PTE_PRESENT | L_PTE_YOUNG |
 				 L_PTE_DIRTY | kern_pgprot);
+	// pgprot_kernel: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x45f)
 
-	// s2_pgprot: L_PTE_SHARED
+	// L_PTE_PRESENT: 0x1, L_PTE_YOUNG: 0x2
+	// s2_pgprot: L_PTE_SHARED (0x400)
 	pgprot_s2  = __pgprot(L_PTE_PRESENT | L_PTE_YOUNG | s2_pgprot);
-	// s2_device_pgprot: PROT_PTE_DEVICE | L_PTE_MT_DEV_SHARED | L_PTE_SHARED,
+	// pgprot_s2: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_SHARED (0x403)
+
+	// s2_device_pgprot: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+	//		     L_PTE_MT_DEV_SHARED | L_PTE_SHARED (0x653)
 	pgprot_s2_device  = __pgprot(s2_device_pgprot);
-	// hyp_device_pgprot: PROT_PTE_DEVICE | L_PTE_MT_DEV_SHARED | L_PTE_SHARED,
+	// pgprot_s2_device: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+	//		     L_PTE_MT_DEV_SHARED | L_PTE_SHARED (0x653)
+
+	// hyp_device_pgprot: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+	//		      L_PTE_MT_DEV_SHARED | L_PTE_SHARED (0x653)
 	pgprot_hyp_device  = __pgprot(hyp_device_pgprot);
+	// pgprot_hyp_device: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_XN |
+	//		      L_PTE_MT_DEV_SHARED | L_PTE_SHARED (0x653)
 
-	// ecc_mask: 0
+	// mem_types[MT_LOW_VECTORS].prot_l1: PMD_TYPE_TABLE (0x1), ecc_mask: 0
 	mem_types[MT_LOW_VECTORS].prot_l1 |= ecc_mask;
-	mem_types[MT_HIGH_VECTORS].prot_l1 |= ecc_mask;
-	// cp->pmd: PMD_SECT_WBWA: (PMD_SECT_TEX(1) | PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE)
-	mem_types[MT_MEMORY].prot_sect |= ecc_mask | cp->pmd;
-	// kern_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED
-	mem_types[MT_MEMORY].prot_pte |= kern_pgprot;
-	mem_types[MT_MEMORY_DMA_READY].prot_pte |= kern_pgprot;
-	mem_types[MT_MEMORY_NONCACHED].prot_sect |= ecc_mask;
-	mem_types[MT_ROM].prot_sect |= cp->pmd;
+	// mem_types[MT_LOW_VECTORS].prot_l1: PMD_TYPE_TABLE (0x1)
 
-	// cp->pmd: PMD_SECT_WBWA
+	// mem_types[MT_HIGH_VECTORS].prot_l1: PMD_TYPE_TABLE (0x1), ecc_mask: 0
+	mem_types[MT_HIGH_VECTORS].prot_l1 |= ecc_mask;
+	// mem_types[MT_HIGH_VECTORS].prot_l1: PMD_TYPE_TABLE (0x1)
+
+	// mem_types[MT_MEMORY].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_S, (0x10402)
+	// ecc_mask: 0
+	// cp->pmd: cache_policies[CPOLICY_WRITEALLOC].pmd:
+	// PMD_SECT_WBWA: PMD_SECT_TEX(1) | PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE (0x100C)
+	mem_types[MT_MEMORY].prot_sect |= ecc_mask | cp->pmd;
+	// mem_types[MT_MEMORY].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_S |
+	//				   PMD_SECT_TEX(1) | PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE (0x1140e)
+
+	// mem_types[MT_MEMORY].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_SHARED (0x443)
+	// kern_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41C)
+	mem_types[MT_MEMORY].prot_pte |= kern_pgprot;
+	// mem_types[MT_MEMORY].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_SHARED |
+	//				  L_PTE_MT_WRITEALLOC (0x45f)
+
+	// mem_types[MT_MEMORY_DMA_READY].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_SHARED (0x443)
+	// kern_pgprot: L_PTE_MT_WRITEALLOC | L_PTE_SHARED (0x41C)
+	mem_types[MT_MEMORY_DMA_READY].prot_pte |= kern_pgprot;
+	// mem_types[MT_MEMORY_DMA_READY].prot_pte: L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_DIRTY | L_PTE_SHARED |
+	//					    L_PTE_MT_WRITEALLOC (0x45f)
+
+	// mem_types[MT_MEMORY_NONCACHED].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_S |
+	//					     PMD_SECT_BUFFERED (0x10406)
+	// ecc_mask: 0
+	mem_types[MT_MEMORY_NONCACHED].prot_sect |= ecc_mask;
+	// mem_types[MT_MEMORY_NONCACHED].prot_sect: PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_S |
+	//					     PMD_SECT_BUFFERED (0x10406)
+
+	// mem_types[MT_ROM].prot_sect: PMD_TYPE_SECT | PMD_SECT_APX | PMD_SECT_AP_WRITE (0x8402)
+	// cp->pmd: cache_policies[CPOLICY_WRITEALLOC].pmd:
+	// PMD_SECT_WBWA: PMD_SECT_TEX(1) | PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE (0x100C)
+	mem_types[MT_ROM].prot_sect |= cp->pmd;
+	// mem_types[MT_ROM].prot_sect: PMD_TYPE_SECT | PMD_SECT_APX | PMD_SECT_AP_WRITE |
+	//				PMD_SECT_TEX(1) | PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE (0x940e)
+
+
+	// cp->pmd: cache_policies[CPOLICY_WRITEALLOC].pmd:
+	// PMD_SECT_WBWA: PMD_SECT_TEX(1) | PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE (0x100C)
 	switch (cp->pmd) {
 	case PMD_SECT_WT:
 		mem_types[MT_CACHECLEAN].prot_sect |= PMD_SECT_WT;
 		break;
 	case PMD_SECT_WB:
 	case PMD_SECT_WBWA:
+		// mem_types[MT_CACHECLEAN].prot_sect: PMD_TYPE_SECT | PMD_SECT_XN | PMD_SECT_APX |
+		//				       PMD_SECT_AP_WRITE (0x8412)
+		// PMD_SECT_WB: PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE (0xC)
 		mem_types[MT_CACHECLEAN].prot_sect |= PMD_SECT_WB;
+		// mem_types[MT_CACHECLEAN].prot_sect: PMD_TYPE_SECT | PMD_SECT_XN | PMD_SECT_APX | PMD_SECT_AP_WRITE |
+		//				       PMD_SECT_CACHEABLE | PMD_SECT_BUFFERABLE (0x841e)
 		break;
 	}
 
-	//  ecc_mask: 0, cp->palicy: "writealloc"
+	//  ecc_mask: 0, cp->palicy: cache_policies[CPOLICY_WRITEALLOC].palicy: "writealloc"
 	printk("Memory policy: ECC %sabled, Data cache %s\n",
 		ecc_mask ? "en" : "dis", cp->policy);
 
-	// ARRAY_SIZE: 15
+	// ARRAY_SIZE(mem_types): 16
 	for (i = 0; i < ARRAY_SIZE(mem_types); i++) {
 		struct mem_type *t = &mem_types[i];
+		// PMD_DOMAIN(DOMAIN_KERNEL): 0x0, PMD_DOMAIN(DOMAIN_USER): 0x20, PMD_DOMAIN(DOMAIN_IO): 0x40
 		if (t->prot_l1)
 			t->prot_l1 |= PMD_DOMAIN(t->domain);
 		if (t->prot_sect)
 			t->prot_sect |= PMD_DOMAIN(t->domain);
+		// 각 mem_types의 prot_l1, prot_sect에 PMD_DOMAIN 값을 추가함
 	}
 }
 
@@ -635,6 +1086,8 @@ EXPORT_SYMBOL(phys_mem_access_prot);
 #endif
 
 // ARM10C 20131102
+// KID 20140418
+// vectors_high(): 0x2000
 // vectors_base(): 0xffff0000
 #define vectors_base()	(vectors_high() ? 0xffff0000 : 0)
 
@@ -882,16 +1335,17 @@ static void __init create_36bit_mapping(struct map_desc *md,
  * supersections.
  */
 // ARM10C 20131102
+// KID 20140418
 // map.pfn: 0x20000
 // map.virtual: 0xC0000000
 // map.length: 0x2f800000
 // map.type: MT_MEMORY
-
+//
 // ARM10C 20131123
 // map.pfn: 0x4F7FE
 // map.virtual: 0xffff0000;
 // map.length: 0x1000, PAGE_SIZE: 0x1000
-// map.type = MT_HIGH_VECTORS;
+// map.type = MT_HIGH_VECTORS
 static void __init create_mapping(struct map_desc *md)
 {
 	unsigned long addr, length, end;
@@ -908,6 +1362,9 @@ static void __init create_mapping(struct map_desc *md)
 		return;
 	}
 
+	// PAGE_OFFSET: 0xC0000000, VMALLOC_START: 0xf0000000, VMALLOC_END: 0xff000000
+	// md->type: MT_MEMORY, md->virtual: 0xC0000000
+	// md->type: MT_HIGH_VECTORS, md->virtual: 0xffff0000
 	if ((md->type == MT_DEVICE || md->type == MT_ROM) &&
 	    md->virtual >= PAGE_OFFSET &&
 	    (md->virtual < VMALLOC_START || md->virtual >= VMALLOC_END)) {
@@ -916,52 +1373,76 @@ static void __init create_mapping(struct map_desc *md)
 		       (long long)__pfn_to_phys((u64)md->pfn), md->virtual);
 	}
 
+	// md->type: MT_MEMORY
+	// md->type: MT_HIGH_VECTORS
 	type = &mem_types[md->type];
+	// type: &mem_types[MT_MEMORY]
+	// type: &mem_types[MT_HIGH_VECTORS]
 
 #ifndef CONFIG_ARM_LPAE // CONFIG_ARM_LPAE=n
 	/*
 	 * Catch 36-bit addresses
 	 */
 	// md->pfn: 0x20000
-	// map.pfn: 0x4F7FE
+	// md->pfn: 0x4F7FE
 	if (md->pfn >= 0x100000) {
 		create_36bit_mapping(md, type);
 		return;
 	}
 #endif
 
-	// md.virtual: 0xC0000000, PAGE_MASK: 0xFFFFF000, addr: 0xC0000000
-	// md.virtual: 0xffff0000, PAGE_MASK: 0xFFFFF000, addr: 0xffff0000
+	// md->virtual: 0xC0000000, PAGE_MASK: 0xFFFFF000
+	// md->virtual: 0xffff0000, PAGE_MASK: 0xFFFFF000
 	addr = md->virtual & PAGE_MASK;
-	// md->pfn: 0x20000, phys: 0x20000000
-	// md->pfn: 0x4F7FE, phys: 0x4F7FE000
-	phys = __pfn_to_phys(md->pfn);
-	// md.length: 0x2f800000, length: 0x2f800000
-	// md.length: 0x1000, length: 0x1000
-	length = PAGE_ALIGN(md->length + (md->virtual & ~PAGE_MASK));
+	// addr: 0xC0000000
+	// addr: 0xffff0000
 
-	// addr: 0xC0000000, phys: 0x20000000, length: 0x2f800000
-	// addr: 0xffff0000, phys: 0x4F7FE000, length: 0x1000
+	// md->pfn: 0x20000, __pfn_to_phys(0x20000): 0x20000000
+	// md->pfn: 0x4F7FE, __pfn_to_phys(0x4F7FE): 0x4F7FE000
+	phys = __pfn_to_phys(md->pfn);
+	// phys: 0x20000000
+	// phys: 0x4F7FE000
+
+	// md->length: 0x2f800000, md->virtual: 0xC0000000, PAGE_MASK: 0xFFFFF000
+	// md->length: 0x1000, md->virtual: 0xffff0000, PAGE_MASK: 0xFFFFF000
+	length = PAGE_ALIGN(md->length + (md->virtual & ~PAGE_MASK));
+	// length: 0x2f800000
+	// length: 0x1000
+
+	// type->prot_l1: mem_types[MT_MEMORY].prot_l1: PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_KERNEL), (0x1)
+	// addr: 0xC0000000, phys: 0x20000000, length: 0x2f800000, SECTION_MASK: 0xFFF00000
+	// type->prot_l1: mem_types[MT_HIGH_VECTORS].prot_l1: PMD_TYPE_TABLE | PMD_DOMAIN(DOMAIN_USER), (0x21)
+	// addr: 0xffff0000, phys: 0x4F7FE000, length: 0x1000, SECTION_MASK: 0xFFF00000
 	if (type->prot_l1 == 0 && ((addr | phys | length) & ~SECTION_MASK)) {
 		printk(KERN_WARNING "BUG: map for 0x%08llx at 0x%08lx can not "
 		       "be mapped using pages, ignoring.\n",
 		       (long long)__pfn_to_phys(md->pfn), addr);
 		return;
 	}
+
 	// (*8)을 하는 이유? 
 	// typedef struct { pmdval_t pgd[2]; } pgd_t; 로 선언되어 pmdval_t이 4byte,
 	// 그래서 주소 계산시 8byte 곱해준다.
-	// addr: 0xC0000000, pgd: 0xc0004000 + 0x600 * 8
-	// addr: 0xffff0000, pgd: 0xc0004000 + 0x7FF * 8
+	//
+	// addr: 0xC0000000, pgd_offset_k(0xC0000000): 0xC0004000 + 0x600 * 8
+	// addr: 0xffff0000, pgd_offset_k(0xffff0000): 0xC0004000 + 0x7FF * 8
 	pgd = pgd_offset_k(addr);
+	// pgd: 0xC0007000
+	// pgd: 0xC0007FF8
 
-	// end: 0xC0000000 + 0x2f800000: 0xef800000
-	// end: 0xffff0000 + 0x1000: 0xffff1000
+	// addr: 0xC0000000, length: 0x2f800000
+	// addr: 0xffff0000, length: 0x1000
 	end = addr + length;
+	// end: 0xef800000
+	// end: 0xffff1000
 	do {
-		// addr: 0xC0000000, end: 0xef800000, next: 0xC0200000
-		// addr: 0xffff0000, end: 0xffff1000, next: 0xffff1000
+		// addr: 0xC0000000, end: 0xef800000, pgd_addr_end(0xC0000000, 0xef800000):
+		// addr: 0xffff0000, end: 0xffff1000, pgd_addr_end(0xffff0000, 0xffff1000):
 		unsigned long next = pgd_addr_end(addr, end);
+		// next: 0xC0200000
+		// next: 0xffff1000
+
+// 2014/04/18 KID 종료
 
 		// pgd: 0xc0007000, addr: 0xC0000000, next: 0xC0200000, phys: 0x20000000
 		// pgd: 0xc0007FF8, addr: 0xffff0000, next: 0xffff1000, phys: 0x4F7FE000
@@ -1166,6 +1647,7 @@ void __init debug_ll_io_init(void)
 // VMALLOC_END: 0xff000000, VMALLOC_OFFSET: (8*1024*1024)=0x00800000
 // (240 << 20): 0x0f000000
 // vmalloc_min: 0xef800000
+// KID 20140306
 static void * __initdata vmalloc_min =
 	(void *)(VMALLOC_END - (240 << 20) - VMALLOC_OFFSET);
 
@@ -1198,34 +1680,47 @@ static int __init early_vmalloc(char *arg)
 early_param("vmalloc", early_vmalloc);
 
 // ARM10C 20131019
+// KID 20140307
+// KID 20140328
+// arm_lowmem_limit: 0x4f800000
 phys_addr_t arm_lowmem_limit __initdata = 0;
 
 // ARM10C 20131019
+// KID 20140306
 void __init sanity_check_meminfo(void)
 {
 	phys_addr_t memblock_limit = 0;
 	int i, j, highmem = 0;
-	// vmalloc_limit: 0x4f800000 = __pa(0xef800000 - 1) + 1
+	// vmalloc_min: 0xef800000, __pa(0xef800000 - 1): 0x4f7fffff
 	phys_addr_t vmalloc_limit = __pa(vmalloc_min - 1) + 1;
+	// vmalloc_limit: 0x4f800000
 
 	// meminfo.nr_banks = 1
 	for (i = 0, j = 0; i < meminfo.nr_banks; i++) {
+		// j: 0
 		struct membank *bank = &meminfo.bank[j];
+		// bank: &meminfo.bank[0]
 		phys_addr_t size_limit;
 
+		// bank: &meminfo.bank[0], i: 0
 		*bank = meminfo.bank[i];
-		size_limit = bank->size;
+		// *bank: meminfo.bank[0]
 
-	        // vmalloc_limit: 0x4f800000
-		// bank->start  : 0x20000000
+		// bank->size: 0x80000000
+		size_limit = bank->size;
+		// size_limit: 0x80000000
+
+		// bank->start: 0x20000000, vmalloc_limit: 0x4f800000
 		if (bank->start >= vmalloc_limit)
 			highmem = 1;
 		else
-			// size_limit: 0x2f800000
+			// vmalloc_limit: 0x4f800000, bank->start: 0x20000000
 			size_limit = vmalloc_limit - bank->start;
+			// size_limit: 0x2f800000
 
-		// bank->highmem: 0
+		// bank->highmem: 0, highmem: 0
 		bank->highmem = highmem;
+		// bank->highmem: 0
 
 #ifdef CONFIG_HIGHMEM // CONFIG_HIGHMEM=y
 		/*
@@ -1233,27 +1728,46 @@ void __init sanity_check_meminfo(void)
 		 * the vmalloc area greatly simplifying things later.
 		 */
 
-		// bank->size: 0x80000000
-		// size_limit: 0x2f800000
+		// highmem: 0, bank->size: 0x80000000, size_limit: 0x2f800000
 		if (!highmem && bank->size > size_limit) {
+			// meminfo.nr_banks: 1, NR_BANKS: 8
 			if (meminfo.nr_banks >= NR_BANKS) {
 				printk(KERN_CRIT "NR_BANKS too low, "
 						 "ignoring high memory\n");
 			} else {
+				// bank+1: &meminfo.bank[1], bank: &meminfo.bank[0]
+				// meminfo.nr_banks: 1, i: 0, sizeof(*bank): 12
 				memmove(bank + 1, bank,
 					(meminfo.nr_banks - i) * sizeof(*bank));
-				meminfo.nr_banks++;
-				i++;
 
-				// bank[1].size: 0x50800000, bank[1].start: 0x4f800000,
-				// bank[1].highmem: 1
+				// meminfo.nr_banks: 1
+				meminfo.nr_banks++;
+				// meminfo.nr_banks: 2
+
+				// i: 0
+				i++;
+				// i: 1
+
+				// bank[1].size: 0x80000000, size_limit: 0x2f800000
 				bank[1].size -= size_limit;
+				// bank[1].size: 0x50800000
+
+				// bank[1].start: 0x20000000, vmalloc_limit: 0x4f800000
 				bank[1].start = vmalloc_limit;
+				// bank[1].start: 0x4f800000
+
+				// bank[1].highmem: 0, highmem: 0
 				bank[1].highmem = highmem = 1;
+				// bank[1].highmem: 1, highmem: 1
+
+				// j: 0
 				j++;
+				// j: 1
 			}
-			// bank->size: 0x2f800000:bank[0]
+
+			// bank->size: 0x80000000, size_limit: 0x2f800000
 			bank->size = size_limit;
+			// bank->size: 0x2f800000 (bank[0])
 		}
 #else
 		/*
@@ -1280,13 +1794,17 @@ void __init sanity_check_meminfo(void)
 			bank->size = size_limit;
 		}
 #endif
+		// bank->highmem: 0
 		if (!bank->highmem) {
-			// bank_end = 0x20000000 + 0x2f800000: 0x4f800000
+			// bank->start: 0x20000000, bank->size: 0x2f800000
 			phys_addr_t bank_end = bank->start + bank->size;
+			// bank_end: 0x4f800000
 
+			// arm_lowmem_limit: 0
 			if (bank_end > arm_lowmem_limit)
-				// arm_lowmem_limit: 0x4f800000
+				// bank_end: 0x4f800000
 				arm_lowmem_limit = bank_end;
+				// arm_lowmem_limit: 0x4f800000
 
 			/*
 			 * Find the first non-section-aligned page, and point
@@ -1303,20 +1821,29 @@ void __init sanity_check_meminfo(void)
 			 */
 			// memblock_limit: 0
 			if (!memblock_limit) {
-				// bank->start: 0x20000000, bank_end: 0x6f800000
+				// bank->start: 0x20000000, bank_end: 0x4f800000
+				// SECTION_SIZE: 0x00100000
+				// IS_ALIGNED(0x20000000, 0x00100000): 1
+				// IS_ALIGNED(0x4f800000, 0x00100000): 1
 				if (!IS_ALIGNED(bank->start, SECTION_SIZE))
 					memblock_limit = bank->start;
 				else if (!IS_ALIGNED(bank_end, SECTION_SIZE))
 					memblock_limit = bank_end;
 			}
 		}
+		// j: 1
 		j++;
+		// j: 2
 	}
+	// i: 2, j: 2
+
 #ifdef CONFIG_HIGHMEM // CONFIG_HIGHMEM=y
+	// highmem: 1
 	if (highmem) {
 		const char *reason = NULL;
 
 		// pipt
+		// cache_is_vipt_aliasing(): 0
 		if (cache_is_vipt_aliasing()) {
 			/*
 			 * Interactions between kmap and other mappings
@@ -1325,6 +1852,8 @@ void __init sanity_check_meminfo(void)
 			 */
 			reason = "with VIPT aliasing cache";
 		}
+
+		// reason: NULL
 		if (reason) {
 			printk(KERN_CRIT "HIGHMEM is not supported %s, ignoring high memory\n",
 				reason);
@@ -1333,28 +1862,35 @@ void __init sanity_check_meminfo(void)
 		}
 	}
 #endif
-	// meminfo.nr_banks: 2
+	// meminfo.nr_banks: 2, j: 2
 	meminfo.nr_banks = j;
+	// meminfo.nr_banks: 2
 
-	// arm_lowmem_limit: 0x4f800000
-	// high_memory: 0xef800000
+	// arm_lowmem_limit: 0x4f800000, __va(0x4f800000 - 1): 0xef7fffff
 	high_memory = __va(arm_lowmem_limit - 1) + 1;
+	// high_memory: 0xef800000
 
 	/*
 	 * Round the memblock limit down to a section size.  This
 	 * helps to ensure that we will allocate memory from the
 	 * last full section, which should be mapped.
 	 */
+	// memblock_limit: 0
 	if (memblock_limit)
 		memblock_limit = round_down(memblock_limit, SECTION_SIZE);
-	if (!memblock_limit)
-		// memblock_limit: 0x4f800000
-		memblock_limit = arm_lowmem_limit;
 
+	// memblock_limit: 0
+	if (!memblock_limit)
+		// arm_lowmem_limit: 0x4f800000
+		memblock_limit = arm_lowmem_limit;
+		// memblock_limit: 0x4f800000
+
+	// memblock_limit: 0x4f800000
 	memblock_set_current_limit(memblock_limit);
 }
 
 // ARM10C 20131102
+// KID 20140327
 static inline void prepare_page_table(void)
 {
 	unsigned long addr;
@@ -1363,10 +1899,10 @@ static inline void prepare_page_table(void)
 	/*
 	 * Clear out all the mappings below the kernel image.
 	 */
-	// 0 ~ 0xBF000000 까지 클리어 (유저 영역)
-	// Virtual Address 0 ~ MODULES_VADDR까지 영역에 대한 페이지테이블 영역 Clear
 	// 페이지테이블영역: 0xC0004000 ~ 0xC0006FC7
-	// MODULES_VADDR: 0xBF000000, PMD_SIZE: 0x00200000
+	// Virtual Address 0 ~ MODULES_VADDR까지 영역에 대한 페이지테이블 영역 Clear
+	// 0 ~ 0xBF000000 까지 클리어 (유저 영역)
+	// MODULES_VADDR: 0xBF000000, PMD_SIZE: 0x200000
 	for (addr = 0; addr < MODULES_VADDR; addr += PMD_SIZE)
 		pmd_clear(pmd_off_k(addr));
 
@@ -1376,7 +1912,7 @@ static inline void prepare_page_table(void)
 #endif
 
 	// 0xBF000000 ~ 0xC0000000 까지 클리어 (모듈 영역)
-	// PAGE_OFFSET: 0xC0000000, PMD_SIZE: 0x00200000
+	// PAGE_OFFSET: 0xC0000000, PMD_SIZE: 0x200000
 	for ( ; addr < PAGE_OFFSET; addr += PMD_SIZE)
 		pmd_clear(pmd_off_k(addr));
 
@@ -1385,13 +1921,13 @@ static inline void prepare_page_table(void)
 	 */
 	// memblock.memory.regions[0].base: 0x20000000
 	// memblock.memory.regions[0].size: 0x80000000
-	// end: 0xA0000000
 	end = memblock.memory.regions[0].base + memblock.memory.regions[0].size;
+	// end: 0xA0000000
 
-	// arm_lowmem_limit: 0x4f800000
+	// end: 0xA0000000, arm_lowmem_limit: 0x4f800000
 	if (end >= arm_lowmem_limit)
-		// end: 0x4f800000
 		end = arm_lowmem_limit;
+		// end: 0x4f800000
 
 	/*
 	 * Clear out all the kernel space mappings, except for the first
@@ -1412,6 +1948,7 @@ static inline void prepare_page_table(void)
 // ARM10C 20131026
 // PTRS_PER_PGD: 2048, sizeof(pgd_t): 8 byte
 // SWAPPER_PG_DIR_SIZE: 0x4000 - 16 Kbytes
+// KID 20140311
 #define SWAPPER_PG_DIR_SIZE	(PTRS_PER_PGD * sizeof(pgd_t))
 #endif
 
@@ -1419,6 +1956,7 @@ static inline void prepare_page_table(void)
  * Reserve the special regions of memory
  */
 // ARM10C 20131026
+// KID 20140311
 void __init arm_mm_memblock_reserve(void)
 {
 	/*
@@ -1426,7 +1964,8 @@ void __init arm_mm_memblock_reserve(void)
 	 * and can only be in node 0.
 	 */
 	// mmu가 사용하는 page table 있는 위치
-	// swapper_pg_dir: 0xc0004000, __pa(swapper_pg_dir); 0x40004000
+	// swapper_pg_dir: 0xc0004000, __pa(swapper_pg_dir); 0x20004000
+	// SWAPPER_PG_DIR_SIZE: 0x4000
 	memblock_reserve(__pa(swapper_pg_dir), SWAPPER_PG_DIR_SIZE);
 
 #ifdef CONFIG_SA1111 // CONFIG_SA1111=n
@@ -1579,35 +2118,53 @@ static void __init kmap_init(void)
 // region 중 lowmem영역을 추출하여 create_mapping 수행
 // create_mapping: 가상 0xC0000000~0xEF800000을 1M 단위로 물리 0x20000000 부터 매핑하면서 
 // mem_type을 MT_MEMORY 값으로 설정.(cache 정책 access permission 등이 들어가 있다.
+// KID 20140418
 static void __init map_lowmem(void)
 {
 	struct memblock_region *reg;
 
 	/* Map all the lowmem memory banks. */
 	for_each_memblock(memory, reg) {
+	// for (reg = memblock.memory.regions;
+	//      reg < (memblock.memory.regions + memblock.memory.cnt); reg++)
+
+		// reg->base: memblock.memory.regions[0].base: 0x20000000
 		phys_addr_t start = reg->base;
+		// start: 0x20000000
+		// reg->size: memblock.memory.regions[0].size: 0x80000000
 		phys_addr_t end = start + reg->size;
+		// end: 0xA0000000
 		struct map_desc map;
 
 		// end: 0xA0000000, arm_lowmem_limit: 0x4f800000
 		if (end > arm_lowmem_limit)
-			// end: 0x4f800000
+			// end: 0xA0000000
 			end = arm_lowmem_limit;
+			// end: 0x4f800000
 
 		// start: 0x20000000, end: 0x4f800000
 		if (start >= end)
 			break;
 
-		// map.pfn: 0x20000
+		// start: 0x20000000, __phys_to_pfn(0x20000000): 0x20000
 		map.pfn = __phys_to_pfn(start);
-		// map.virtual: 0xC0000000
+		// map.pfn: 0x20000
+
+		// start: 0x20000000, __phys_to_virt(0x20000000): 0xC0000000
 		map.virtual = __phys_to_virt(start);
-		// map.length: 0x2f800000
+		// map.virtual: 0xC0000000
+
+		// end: 0x4f800000, start: 0x20000000
 		map.length = end - start;
+		// map.length: 0x2f800000
+
+		// MT_MEMORY: 9
 		map.type = MT_MEMORY;
+		// map.type: 9 
 
 // 2013/11/02 종료
 // 2013/11/09 시작
+
 		create_mapping(&map);
 	}
 }
@@ -1617,6 +2174,9 @@ static void __init map_lowmem(void)
  * maps, and sets up the zero page, bad page and bad page tables.
  */
 // ARM10C 20131026
+// KID 20140312
+// KID 20140320
+// mdesc: __mach_desc_EXYNOS5_DT
 void __init paging_init(struct machine_desc *mdesc)
 {
 	void *zero_page;

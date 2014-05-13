@@ -129,6 +129,9 @@ extern void softirq_init(void);
 
 /* Untouched command line saved by arch-specific code. */
 // ARM10C 20140222
+// KID 20140302
+// KID 20140305
+// boot_command_line: "console=ttySAC2,115200 init=/linuxrc"
 char __initdata boot_command_line[COMMAND_LINE_SIZE];
 
 /* Untouched saved command line (eg. for /proc) */
@@ -167,6 +170,7 @@ const char * envp_init[MAX_INIT_ENVS+2] = { "HOME=/", "TERM=linux", NULL, };
 static const char *panic_later, *panic_param;
 
 // ARM10C 20131019
+// KID 20140306
 extern const struct obs_kernel_param __setup_start[], __setup_end[];
 
 static int __init obsolete_checksetup(char *line)
@@ -261,6 +265,7 @@ static int __init repair_env_string(char *param, char *val, const char *unused)
  * Unknown boot options get handed to init, unless they look like
  * unused parameters (modprobe will find them in /proc/cmdline).
  */
+// ARM10C 20140322
 static int __init unknown_bootoption(char *param, char *val, const char *unused)
 {
 	repair_env_string(param, val, unused);
@@ -407,43 +412,65 @@ static noinline void __init_refok rest_init(void)
 
 /* Check for early params. */
 // ARM10C 20131019
+// KID 20140306
+// param: "console", val: "ttySAC2,115200", doing: "early options"
 static int __init do_early_param(char *param, char *val, const char *unused)
 {
 	const struct obs_kernel_param *p;
 
+	// early_param("earlycon", setup_early_serial8250_console)
 	for (p = __setup_start; p < __setup_end; p++) {
+		// p: __setup_setup_early_serial8250_console	
+		// p->early: 1, param: "console", p->str: "earlycon"
+		// parameq("console", "earlycon"): 0
 		if ((p->early && parameq(param, p->str)) ||
 		    (strcmp(param, "console") == 0 &&
 		     strcmp(p->str, "earlycon") == 0)
 		) {
+			// p->setup_func: setup_early_serial8250_console, val: "ttySAC2,115200"
+			// setup_early_serial8250_console("ttySAC2,115200"): 0
 			if (p->setup_func(val) != 0)
 				pr_warn("Malformed early option '%s'\n", param);
 		}
 	}
 	/* We accept everything at this stage. */
 	return 0;
+	// return 0
 }
 
 // ARM10C 20131019
+// KID 20140305
+// ARM10C 20140322
+// tmp_cmdline: "console=ttySAC2,115200 init=/linuxrc"
 void __init parse_early_options(char *cmdline)
 {
+	// cmdline: "console=ttySAC2,115200 init=/linuxrc"
 	parse_args("early options", cmdline, NULL, 0, 0, 0, do_early_param);
 }
 
 /* Arch code calls this early on, or if not, just before other parsing. */
 // ARM10C 20131019
+// KID 20140305
+// ARM10C 20140322
 void __init parse_early_param(void)
 {
 	static __initdata int done = 0;
 	static __initdata char tmp_cmdline[COMMAND_LINE_SIZE];
 
+	// done: 0
 	if (done)
 		return;
 
 	/* All fall through to do_early_param. */
+	// boot_command_line: "console=ttySAC2,115200 init=/linuxrc", COMMAND_LINE_SIZE: 1024
 	strlcpy(tmp_cmdline, boot_command_line, COMMAND_LINE_SIZE);
+	// tmp_cmdline: "console=ttySAC2,115200 init=/linuxrc"
+
 	parse_early_options(tmp_cmdline);
+
+	// done: 0
 	done = 1;
+	// done: 1
 }
 
 /*
@@ -490,15 +517,21 @@ void __init __weak thread_info_cache_init(void)
 /*
  * Set up kernel memory allocators
  */
+// ARM10C 20140329
 static void __init mm_init(void)
 {
 	/*
 	 * page_cgroup requires contiguous pages,
 	 * bigger than MAX_ORDER unless SPARSEMEM.
 	 */
-	page_cgroup_init_flatmem();
+	page_cgroup_init_flatmem(); // null function
 	mem_init();
+	// bootmem으로 관리하던 메모리를 buddy로 이관.
+	// 각 section 메모리 크기를 출력.
+	
+	// mm/Makefile 에서 CONFIG_SLUB 설정으로 slub.c 로 jump
 	kmem_cache_init();
+	
 	percpu_init_late();
 	pgtable_cache_init();
 	vmalloc_init();
@@ -565,7 +598,7 @@ asmlinkage void __init start_kernel(void)
 
 	setup_nr_cpu_ids();
 	setup_per_cpu_areas();
-	// pcpu 구조체를 만들어 줌(mm/percpu.c)
+	// pcpu 구조체를 만들어 줌 (mm/percpu.c)
 
 	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
 	// boot cpu 0의 pcpu 영역의 base주소를 core register에 설정해줌
@@ -573,26 +606,52 @@ asmlinkage void __init start_kernel(void)
 	build_all_zonelists(NULL, NULL);
 
 // 2014/03/08 종료
+// 2014/03/15 시작
 
 	page_alloc_init();
+	// cpu_chain에 page_alloc_cpu_notify를 연결함 (mutex lock/unlock 사용)
 
+	// boot_command_line: "console=ttySAC2,115200 init=/linuxrc"
 	pr_notice("Kernel command line: %s\n", boot_command_line);
+	// "Kernel command line: console=ttySAC2,115200 init=/linuxrc"
+
 	parse_early_param();
+	// setup_arch에서 수행했던 작업 다시 수행
+	// command arg에서 각 요소들을 파싱하여 early init section으로 설정된 디바이스 초기화.
+	// 우리는 serial device가 검색이 되지만 config설정은 없어서 아무것도 안함.
+
+	// static_command_line: "console=ttySAC2,115200 init=/linuxrc"
 	parse_args("Booting kernel", static_command_line, __start___param,
 		   __stop___param - __start___param,
 		   -1, -1, &unknown_bootoption);
+	// DTB에서 넘어온 bootargs를 파싱하여 param, val을 뽑아내고 그에 대응되는
+	// kernel_param 구조체에 값을 등록함.
 
 	jump_label_init();
+	// HAVE_JUMP_LABEL 이 undefined 이므로 NULL 함수
 
 	/*
 	 * These use large bootmem allocations and must precede
 	 * kmem_cache_init()
 	 */
 	setup_log_buf(0);
+	// defalut log_buf의 크기는 __LOG_BUF_LEN: 0x20000 (128KB) 임
+	// early_param 에서 호출했던 log_buf_len 값이 있다면 log_buf의 크기를 넘어온 크기로 만듬
+
 	pidhash_init();
+	// pidhash의 크기를 16kB만큼 할당 받고 4096개의 hash list를 만듬
+
 	vfs_caches_init_early();
+	// Dentry cache, Inode-cache용 hash를 위한 메모리 공간을 각각 512kB, 256kB만큼 할당 받고,
+	// 131072, 65536개 만큼 hash table을 각각 만듬
+
+// 2014/03/22 종료
+// 2014/03/29 시작
+
 	sort_main_extable();
-	trap_init();
+	// extable 을 cmp_ex를 이용하여 sort수행
+
+	trap_init(); // null function
 	mm_init();
 
 	/*

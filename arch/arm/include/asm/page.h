@@ -11,8 +11,12 @@
 #define _ASMARM_PAGE_H
 
 /* PAGE_SHIFT determines the page size */
+/*
+// KID 20140418
+*/
 #define PAGE_SHIFT		12
 /*
+// ARM10C 20140419
 // ARM10C 20131207
 // PAGE_SIZE: 0x1000
 */
@@ -119,6 +123,7 @@
 struct page;
 struct vm_area_struct;
 
+// KID 20140418
 struct cpu_user_fns {
 	void (*cpu_clear_user_highpage)(struct page *page, unsigned long vaddr);
 	void (*cpu_copy_user_highpage)(struct page *to, struct page *from,

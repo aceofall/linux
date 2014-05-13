@@ -33,6 +33,7 @@ static inline pte_t get_top_pte(unsigned long va)
 
 // ARM10C 20131102
 // ARM10C 20131130
+// KID 20140327
 static inline pmd_t *pmd_off_k(unsigned long virt)
 {
 	// section table의 위치를 리턴 (2MB 단위)
@@ -40,6 +41,7 @@ static inline pmd_t *pmd_off_k(unsigned long virt)
 }
 
 // ARM10C 20131026
+// KID 20140321
 struct mem_type {
 	pteval_t prot_pte;
 	pmdval_t prot_l1;
@@ -91,9 +93,12 @@ extern __init void add_static_vm_early(struct static_vm *svm);
 extern phys_addr_t arm_dma_limit;
 #else
 // ARM10C 20131026
+// KID 20140311
+// arm_dma_limit: 0xFFFFFFFF
 #define arm_dma_limit ((phys_addr_t)~0)
 #endif
 
+// KID 20140311
 extern phys_addr_t arm_lowmem_limit;
 
 void __init bootmem_init(void);

@@ -19,6 +19,14 @@
 // ARM10C 20131012
 // ARM10C 20131116
 // ARM10C 20131130
+// ARM10C 20140315
+// LIST_HEAD_INIT(cpu_add_remove_lock.wait_list):
+// { &(cpu_add_remove_lock.wait_list), &(cpu_add_remove_lock.wait_list) }
+// KID 20140327
+// LIST_HEAD_INIT((init_mm.mmap_sem).wait_list):
+// { &((init_mm.mmap_sem).wait_list), &((init_mm.mmap_sem).wait_list) }
+// LIST_HEAD_INIT(init_mm.mmlist):
+// { &(init_mm.mmlist), &(init_mm.mmlist) }
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
 
 // ARM10C 20131116
@@ -28,6 +36,8 @@
 
 // ARM10C 20130824
 // ARM10C 20140301
+// ARM10C 20140315
+// &waiter->list->next: list, &waiter->list->prev: list
 static inline void INIT_LIST_HEAD(struct list_head *list)
 {
 	list->next = list;
@@ -43,7 +53,10 @@ static inline void INIT_LIST_HEAD(struct list_head *list)
 #ifndef CONFIG_DEBUG_LIST // CONFIG_DEBUG_LIST=n
 // ARM10C 20131130
 // __list_add(new, head->prev, head);
-// ARM10C 20140301 //new = &dchunk->list, prev = &pcpu_slot[11], next = &pcpu_slot[11]->next(&pcpu_slot[11])
+// ARM10C 20140301
+// new: &dchunk->list, prev: &pcpu_slot[11], next: &pcpu_slot[11]->next(&pcpu_slot[11])
+// ARM10C 20140315
+// __list_add(&waiter.list, (&(&cpu_add_remove_lock)->wait_list)->prev, &(&cpu_add_remove_lock)->wait_list)
 static inline void __list_add(struct list_head *new,
 			      struct list_head *prev,
 			      struct list_head *next)
@@ -89,8 +102,12 @@ static inline void list_add(struct list_head *new, struct list_head *head)
  */
 // ARM10C 20131130
 // list_add_tail(&svm->list, &curr_svm->list);
+// ARM10C 20140315
+// list_add_tail(&waiter.list, &(&cpu_add_remove_lock)->wait_list);
 static inline void list_add_tail(struct list_head *new, struct list_head *head)
 {
+	// new: &waiter.list, head->prev: (&(&cpu_add_remove_lock)->wait_list)->prev
+	// head: &(&cpu_add_remove_lock)->wait_list
 	__list_add(new, head->prev, head);
 }
 
@@ -101,6 +118,10 @@ static inline void list_add_tail(struct list_head *new, struct list_head *head)
  * This is only for internal list manipulation where we know
  * the prev/next entries already!
  */
+// ARM10C 20140315
+// *entry : &waiter->list
+// &waiter->list->prev: prev, &waiter->list->next: next
+// ARM10C 20140412
 static inline void __list_del(struct list_head * prev, struct list_head * next)
 {
 	next->prev = prev;
@@ -114,16 +135,23 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
  * in an undefined state.
  */
 #ifndef CONFIG_DEBUG_LIST
-// ARM10C 20140301 
+// ARM10C 20140301
+// ARM10C 20140315
+// *entry: &waiter->list
 static inline void __list_del_entry(struct list_head *entry)
 {
 	__list_del(entry->prev, entry->next);
 }
 
+// ARM10C 20140412
 static inline void list_del(struct list_head *entry)
 {
 	__list_del(entry->prev, entry->next);
+
+	// LIST_POISON1: ((void *) 0x00100100)
 	entry->next = LIST_POISON1;
+
+	// LIST_POISON2: ((void *) 0x00200200)
 	entry->prev = LIST_POISON2;
 }
 #else
@@ -158,10 +186,16 @@ static inline void list_replace_init(struct list_head *old,
  * list_del_init - deletes entry from list and reinitialize it.
  * @entry: the element to delete from the list.
  */
+// ARM10C 20140315
+// *entry : &waiter->list
 static inline void list_del_init(struct list_head *entry)
 {
+	// entry: waiter->list
 	__list_del_entry(entry);
+	// &waiter->list->prev: prev, &waiter->list->next: next
+
 	INIT_LIST_HEAD(entry);
+	// &waiter->list->next: &waiter->list, &waiter->list->prev: &waiter->list
 }
 
 /**
@@ -210,9 +244,15 @@ static inline int list_is_last(const struct list_head *list,
  * list_empty - tests whether a list is empty
  * @head: the list to test.
  */
+// ARM10C 20140315
+// &waiter->list
+// ARM10C 20130322
+// ARM10C 20140322
 static inline int list_empty(const struct list_head *head)
 {
+	// head->next: waiter->list->next, head: waiter->list
 	return head->next == head;
+	// return 0
 }
 
 /**
@@ -375,7 +415,10 @@ static inline void list_splice_tail_init(struct list_head *list,
  * @member:	the name of the list_struct within the struct.
  */
 // ARM10C 20131130
-#define list_entry(ptr, type, member) \
+// ARM10C 20140322
+// ARM10C 20140329
+// ARM10C 20140412
+#define list_entry(ptr, type, member)		\
 	container_of(ptr, type, member)
 
 /**
@@ -444,6 +487,7 @@ static inline void list_splice_tail_init(struct list_head *list,
  * @member:	the name of the list_struct within the struct.
  */
 // ARM10C 20131130
+// ARM10C 20140329
 #define list_for_each_entry(pos, head, member)				\
 	for (pos = list_entry((head)->next, typeof(*pos), member);	\
 	     &pos->member != (head); 	\

@@ -36,13 +36,21 @@
 #endif
 
 #ifndef __cacheline_aligned
+// ARM10C 20140412
+// SMP_CACHE_BYTES: 64
 #define __cacheline_aligned					\
   __attribute__((__aligned__(SMP_CACHE_BYTES),			\
 		 __section__(".data..cacheline_aligned")))
 #endif /* __cacheline_aligned */
 
 #ifndef __cacheline_aligned_in_smp
-#ifdef CONFIG_SMP
+#ifdef CONFIG_SMP // CONFIG_SMP=y
+// ARM10C 20140412
+// __cacheline_aligned:
+// __attribute__((__aligned__(64), __section__(".data..cacheline_aligned")))
+//
+// __cacheline_aligned_in_smp:
+// __attribute__((__aligned__(64), __section__(".data..cacheline_aligned")))
 #define __cacheline_aligned_in_smp __cacheline_aligned
 #else
 #define __cacheline_aligned_in_smp
@@ -73,7 +81,10 @@
 #endif
 #endif
 
-#ifndef CONFIG_ARCH_HAS_CACHE_LINE_SIZE
+#ifndef CONFIG_ARCH_HAS_CACHE_LINE_SIZE // CONFIG_ARCH_HAS_CACHE_LINE_SIZE=n
+// ARM10C 20140419
+// L1_CACHE_BYTES: 64
+// cache_line_size(): 64
 #define cache_line_size()	L1_CACHE_BYTES
 #endif
 

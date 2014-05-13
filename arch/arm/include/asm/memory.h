@@ -28,6 +28,10 @@
  * Allow for constants defined here to be used from assembly code
  * by prepending the UL suffix only with actual C code compilation.
  */
+/*
+// ARM10C 20140419
+// UL(x) : xUL
+*/
 #define UL(x) _AC(x, UL)
 
 /*
@@ -41,11 +45,13 @@
  * TASK_UNMAPPED_BASE - the lower boundary of the mmap VM area
  */
 /*
+// KID 20140327
 // PAGE_OFFSET: 0xC0000000
 */
 #define PAGE_OFFSET		UL(CONFIG_PAGE_OFFSET)
 /*
 // ARM10C 20131102
+// ARM10C 20140419
 // TASK_SIZE: 0xBF000000
 */
 #define TASK_SIZE		(UL(CONFIG_PAGE_OFFSET) - UL(SZ_16M))
@@ -63,6 +69,9 @@
 #ifndef CONFIG_THUMB2_KERNEL // CONFIG_THUMB2_KERNEL=n
 /*
 // ARM10C 20131102
+// KID 20140327
+// ARM10C 20140419
+// PAGE_OFFSET: 0xC0000000, SZ_16M: 0x01000000
 // MODULES_VADDR: 0xBF000000: 0xC0000000 - 0x01000000
 */
 #define MODULES_VADDR		(PAGE_OFFSET - SZ_16M)
@@ -78,7 +87,12 @@
 /*
  * The highmem pkmap virtual space shares the end of the module area.
  */
-#ifdef CONFIG_HIGHMEM
+#ifdef CONFIG_HIGHMEM // CONFIG_HIGHMEM=y
+/*
+// ARM10C 20140419
+// PAGE_OFFSET: 0xC0000000, PMD_SIZE: 0x200000
+// MODULES_END: 0xBFE00000
+*/
 #define MODULES_END		(PAGE_OFFSET - PMD_SIZE)
 #else
 #define MODULES_END		(PAGE_OFFSET)
@@ -151,6 +165,8 @@
 /*
 // ARM10C 20131019
 // ARM10C 20131102
+// KID 20140418
+// PAGE_SHIFT: 12
 */
 #define	__phys_to_pfn(paddr)	((unsigned long)((paddr) >> PAGE_SHIFT))
 /*
@@ -275,6 +291,12 @@ static inline unsigned long __phys_to_virt(unsigned long x)
  * direct-mapped view.  We assume this is the first page
  * of RAM in the mem_map as well.
  */
+/*
+// ARM10C 20140329
+// ARM10C 20140419
+// PHYS_OFFSET: 0x20000000, PAGE_SHIFT: 12
+// PHYS_PFN_OFFSET: 0x20000
+*/
 #define PHYS_PFN_OFFSET	((unsigned long)(PHYS_OFFSET >> PAGE_SHIFT))
 
 /*
@@ -299,6 +321,7 @@ static inline void *phys_to_virt(phys_addr_t x)
  */
 /*
 // ARM10C 20131019
+// KID 20140306
 */
 #define __pa(x)			__virt_to_phys((unsigned long)(x))
 /*

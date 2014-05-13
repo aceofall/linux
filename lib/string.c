@@ -344,6 +344,7 @@ EXPORT_SYMBOL(strnchr);
  * Returns a pointer to the first non-whitespace character in @str.
  */
 // ARM10C 20131019
+// KID 20140305
 char *skip_spaces(const char *str)
 {
 	while (isspace(*str))
@@ -620,25 +621,51 @@ EXPORT_SYMBOL(memcpy);
  * Unlike memcpy(), memmove() copes with overlapping areas.
  */
 // ARM10C 20131019
+// KID 20140307
+// bank+1: &meminfo.bank[1], bank: &meminfo.bank[0], 12
+// next: &memblock.memory.regions[1], next+1: &memblock.memory.regions[2], 0
 void *memmove(void *dest, const void *src, size_t count)
 {
 	char *tmp;
 	const char *s;
 
+	// dest: bank+1, src: bank
+	// dest: next, src: next+1
 	if (dest <= src) {
+		// dest: next
 		tmp = dest;
+		// tmp: next
+
 		s = src;
+		// s: next+1
+
+		// count: 0
 		while (count--)
 			*tmp++ = *s++;
 	} else {
 		tmp = dest;
+		// tmp: bank+1
+
+		// count: 12
 		tmp += count;
+		// tmp: bank+2
+
 		s = src;
+		// s: bank
+
+		// count: 12
 		s += count;
+		// s: bank+1
+
+		// count: 12
 		while (count--)
+			// tmp: bank+2, s: bank+1
 			*--tmp = *--s;
+			// tmp: bank+1, s: bank
 	}
 	return dest;
+	// dest: bank+1
+	// dest: next
 }
 EXPORT_SYMBOL(memmove);
 #endif
@@ -695,6 +722,7 @@ EXPORT_SYMBOL(memscan);
  * @s1: The string to be searched
  * @s2: The string to search for
  */
+// KID 20140306
 char *strstr(const char *s1, const char *s2)
 {
 	size_t l1, l2;

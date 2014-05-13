@@ -23,11 +23,14 @@
  *	__entry_text_start, __entry_text_end
  *	__ctors_start, __ctors_end
  */
+// KID 20140304
 extern char _text[], _stext[], _etext[];
+// KID 20140304
 extern char _data[], _sdata[], _edata[];
 extern char __bss_start[], __bss_stop[];
 extern char __init_begin[], __init_end[];
 extern char _sinittext[], _einittext[];
+// KID 20140304
 extern char _end[];
 // ARM10C 20140301
 // ARM10C 20140308

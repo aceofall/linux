@@ -22,24 +22,47 @@
 
 #include "smpboot.h"
 
-#ifdef CONFIG_SMP
+#ifdef CONFIG_SMP // CONFIG_SMP=y
 /* Serializes the updates to cpu_online_mask, cpu_present_mask */
+// ARM10C 20140315
+// DEFINE_MUTEX(cpu_add_remove_lock):
+// struct mutex cpu_add_remove_lock =
+// { .count = { (1) }
+//    , .wait_lock =
+//    (spinlock_t )
+//    { { .rlock =
+//	  {
+//	  .raw_lock = { { 0 } },
+//	  .magic = 0xdead4ead,
+//	  .owner_cpu = -1,
+//	  .owner = 0xffffffff,
+//	  }
+//    } }
+//    , .wait_list =
+//    { &(cpu_add_remove_lock.wait_list), &(cpu_add_remove_lock.wait_list) }
+//    , .magic = &cpu_add_remove_lock
+// }
 static DEFINE_MUTEX(cpu_add_remove_lock);
 
 /*
  * The following two API's must be used when attempting
  * to serialize the updates to cpu_online_mask, cpu_present_mask.
  */
+// ARM10C 20140315
 void cpu_maps_update_begin(void)
 {
 	mutex_lock(&cpu_add_remove_lock);
 }
 
+// ARM10C 20140322
 void cpu_maps_update_done(void)
 {
 	mutex_unlock(&cpu_add_remove_lock);
 }
 
+// ARM10C 20140322
+// RAW_NOTIFIER_HEAD(cpu_chain):
+// struct raw_notifier_head cpu_chain = { .head = NULL }
 static RAW_NOTIFIER_HEAD(cpu_chain);
 
 /* If set, cpu_up and cpu_down will return -EBUSY and do nothing.
@@ -160,12 +183,22 @@ static void cpu_hotplug_done(void) {}
 #endif	/* #else #if CONFIG_HOTPLUG_CPU */
 
 /* Need to know about CPUs going up/down? */
+// ARM10C 20140315
+// nb: &page_alloc_cpu_nitify_nb
 int __ref register_cpu_notifier(struct notifier_block *nb)
 {
 	int ret;
 	cpu_maps_update_begin();
+	// waiter를 만들어 mutex를 lock을 시도하며 기다리다 가능할 때 mutex lock한다.
+
+	// &cpu_chain, nb: &page_alloc_cpu_nitify_nb
 	ret = raw_notifier_chain_register(&cpu_chain, nb);
+	// (&cpu_chain)->head: page_alloc_cpu_notify_nb 포인터 대입
+	// (&page_alloc_cpu_notify_nb)->next은 NULL로 대입
+
 	cpu_maps_update_done();
+	// mutex를 기다리는(waiter)가 있으면 깨우고 아니면 mutex unlock한다.
+
 	return ret;
 }
 

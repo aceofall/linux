@@ -114,6 +114,7 @@ struct processor processor __read_mostly;
 #ifdef MULTI_TLB // defined
 // ARM10C 20131102
 // ARM10C 20131130
+// KID 20140327
 struct cpu_tlb_fns cpu_tlb __read_mostly;
 #endif
 #ifdef MULTI_USER
@@ -134,6 +135,8 @@ EXPORT_SYMBOL(outer_cache);
  * variable directly.
  */
 // ARM10C 20131026
+// KID 20140320
+// __cpu_architecture: CPU_ARCH_ARMv7(9)
 int __cpu_architecture __read_mostly = CPU_ARCH_UNKNOWN;
 
 // ARM10C 20130928
@@ -156,9 +159,14 @@ EXPORT_SYMBOL(elf_platform);
 
 static const char *cpu_name;
 // ARM10C 20131012
+// KID 20140303
+// machine_name: "SAMSUNG EXYNOS5 (Flattened Device Tree)"
 static const char *machine_name;
+// KID 20140305
 static char __initdata cmd_line[COMMAND_LINE_SIZE];
 // ARM10C 20131012
+// KID 20140303
+// machine_desc: __mach_desc_EXYNOS5_DT
 struct machine_desc *machine_desc __initdata;
 
 // ARM10C 20130914
@@ -692,6 +700,7 @@ static void __init smp_build_mpidr_hash(void)
 
 // ARM10C 20130914
 // KID 20140211
+// KID 20140320
 static void __init setup_processor(void)
 {
 	struct proc_info_list *list;
@@ -729,11 +738,11 @@ static void __init setup_processor(void)
 	// *proc_arch[9] = { "7" };
 	// A.R.M: B4.1.130 SCTLR, System Control Register, VMSA
 	// A.R.M: A3.2 Alignment support
-	// cr_alignment: 1 (0xxxxxxx7f)
+	// cr_alignment: 0x70c7387d (exynos5250 amdale-5250 board 기준)
 	printk("CPU: %s [%08x] revision %d (ARMv%s), cr=%08lx\n",
 	       cpu_name, read_cpuid_id(), read_cpuid_id() & 15,
 	       proc_arch[cpu_architecture()], cr_alignment);
-	// cr_alignment: 0x10c5387d
+	// cr_alignment: 0x70c7387d
 
 	// init_utsname()->machine: "arm", __NEW_UTS_LEN: 64
 	// list->arch_name: "armv7", ENDIANNESS: 'l'
@@ -783,10 +792,15 @@ void __init dump_machine_table(void)
 }
 
 // ARM10C 20131012
+// KID 20140306
+// base: 0x20000000, size: 0x80000000
 int __init arm_add_memory(phys_addr_t start, phys_addr_t size)
 {
+	// meminfo.nr_banks: 0
 	struct membank *bank = &meminfo.bank[meminfo.nr_banks];
+	// bank: &meminfo.bank[0]
 
+	// meminfo.nr_banks: 0, NR_BANKS: 8
 	if (meminfo.nr_banks >= NR_BANKS) {
 		printk(KERN_CRIT "NR_BANKS too low, "
 			"ignoring memory at 0x%08llx\n", (long long)start);
@@ -800,12 +814,14 @@ int __init arm_add_memory(phys_addr_t start, phys_addr_t size)
 	// start=0x20000000 , size=0x80000000
 	// PAGE_MASK=(~((1 << 12) - 1)) : 0xFFFFF000, 4k
 	// size = 0x80000000 - (0x20000000 & 0x00000FFF)
-	// size = 0x80000000
 	size -= start & ~PAGE_MASK;
-	// bank->start=0x20000000
-	bank->start = PAGE_ALIGN(start);
+	// size: 0x80000000
 
-#ifndef CONFIG_ARM_LPAE	// not defined
+	// start: 0x20000000, PAGE_ALIGN(start): 0x20000000
+	bank->start = PAGE_ALIGN(start);
+	// bank->start: 0x20000000
+
+#ifndef CONFIG_ARM_LPAE	// CONFIG_ARM_LPAE=n
 	if (bank->start + size < bank->start) {
 		printk(KERN_CRIT "Truncating memory at 0x%08llx to fit in "
 			"32-bit physical address space\n", (long long)start);
@@ -818,17 +834,22 @@ int __init arm_add_memory(phys_addr_t start, phys_addr_t size)
 	}
 #endif
 
-	// bank->size=0x80000000
+	// size: 0x80000000, PAGE_SIZE: 0x1000
 	bank->size = size & ~(phys_addr_t)(PAGE_SIZE - 1);
+	// bank->size: 0x80000000
 
 	/*
 	 * Check whether this memory region has non-zero size or
 	 * invalid node number.
 	 */
+	// bank->size: 0x80000000
 	if (bank->size == 0)
 		return -EINVAL;
 
+	// meminfo.nr_banks: 0
 	meminfo.nr_banks++;
+	// meminfo.nr_banks: 1
+
 	return 0;
 }
 
@@ -1020,6 +1041,7 @@ static inline void reserve_crashkernel(void) {}
 #endif /* CONFIG_KEXEC */
 
 // ARM10C 20131019
+// KID 20140306
 static int __init meminfo_cmp(const void *_a, const void *_b)
 {
 	const struct membank *a = _a, *b = _b;
@@ -1058,12 +1080,20 @@ void __init setup_arch(char **cmdline_p)
 	mdesc = setup_machine_fdt(__atags_pointer);
 	if (!mdesc)
 		mdesc = setup_machine_tags(__atags_pointer, __machine_arch_type);
+		// dtb를 찾지 못했을 경우 atags를 사용하여 machine 정보 설정
+
+	// mdesc: __mach_desc_EXYNOS5_DT
 	machine_desc = mdesc;
+	// machine_desc: __mach_desc_EXYNOS5_DT
+
+	// mdesc->name: "SAMSUNG EXYNOS5 (Flattened Device Tree)"
 	machine_name = mdesc->name;
+	// machine_name: "SAMSUNG EXYNOS5 (Flattened Device Tree)"
 
 	// 우리는 안함.
 	setup_dma_zone(mdesc);
 
+	// mdesc->reboot_mode: REBOOT_COLD
 	if (mdesc->reboot_mode != REBOOT_HARD)
 		reboot_mode = mdesc->reboot_mode;
 
@@ -1074,9 +1104,15 @@ void __init setup_arch(char **cmdline_p)
 
 // 2013/10/12 종료
 // 2013/10/19 시작
+
 	/* populate cmd_line too for later use, preserving boot_command_line */
+	// boot_command_line: "console=ttySAC2,115200 init=/linuxrc", COMMAND_LINE_SIZE: 1024
 	strlcpy(cmd_line, boot_command_line, COMMAND_LINE_SIZE);
+	// cmd_line: "console=ttySAC2,115200 init=/linuxrc"
+
+	// cmdline_p: start_kernel함수의 local char pointer
 	*cmdline_p = cmd_line;
+	// *cmdline_p: "console=ttySAC2,115200 init=/linuxrc"
 
 	// command arg에서 각 요소들을 파싱하여 early init section으로 설정된 디바이스 초기화.
 	// 우리는 serial device가 검색이 되지만 config설정은 없어서 아무것도 안함.
@@ -1084,7 +1120,9 @@ void __init setup_arch(char **cmdline_p)
 
 	// page frame number 기준으로 정렬
 	// 어드래스로 비교안하는 이유?
+	// meminfo.nr_banks: 1, sizeof(meminfo.bank[0]): 12 bytes
 	sort(&meminfo.bank, meminfo.nr_banks, sizeof(meminfo.bank[0]), meminfo_cmp, NULL);
+	// meminfo.nr_banks이 1이라 sort할 내용이 없음.
 
 	// memory bank에서 bank하나가  valloc limit 을 넘으면 2개로 쪼갬.bank[0]:low bank[1]:high
 	sanity_check_meminfo();
@@ -1093,6 +1131,7 @@ void __init setup_arch(char **cmdline_p)
 // 2013/10/26 시작
 
 	// meminfo를 참조하여 메모리 블록 구조체를 초기화
+	// mdesc: __mach_desc_EXYNOS5_DT
 	arm_memblock_init(&meminfo, mdesc);
 
 // 2013/10/26 종료
@@ -1100,6 +1139,7 @@ void __init setup_arch(char **cmdline_p)
 
 	// mmu용 page table (pgd, pte)을 생성
 	// zone 영역 3개로 나누고 각 zone에 해당하는 page를 할당함
+	// mdesc: __mach_desc_EXYNOS5_DT
 	paging_init(mdesc);
 	request_standard_resources(mdesc);
 

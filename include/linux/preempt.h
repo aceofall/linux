@@ -12,6 +12,7 @@
 
 // CONFIG_DEBUG_PREEMPT=y, CONFIG_PREEMPT_TRACER=n
 #if defined(CONFIG_DEBUG_PREEMPT) || defined(CONFIG_PREEMPT_TRACER) // ARM10C Y 
+// ARM10C 20140315
   extern void add_preempt_count(int val);   // ARM10C this 
 // KID 20140116
   extern void sub_preempt_count(int val);
@@ -21,18 +22,22 @@
 #endif
 
 // ARM10C 20140125
+// ARM10C 20140315
 #define inc_preempt_count() add_preempt_count(1)
 // KID 20140116
 // ARM10C 20140125
 #define dec_preempt_count() sub_preempt_count(1)
 
 // ARM10C 20130824
+// ARM10C 20140315
 #define preempt_count()	(current_thread_info()->preempt_count)
 
 #ifdef CONFIG_PREEMPT
 
 asmlinkage void preempt_schedule(void);
 
+// ARM10C 20130322
+// TIF_NEED_RESCHED: 1
 #define preempt_check_resched() /*ARM10C this*/ \
 do { \
 	if (unlikely(test_thread_flag(TIF_NEED_RESCHED))) \
@@ -66,7 +71,8 @@ do { \
 
 // KID 20140114
 // ARM10C 20140125
-#define preempt_disable()/*ARM10C this*/ \
+// ARM10C 20140315
+#define preempt_disable()/*ARM10C this*/	\
 do { \
 	inc_preempt_count(); \
 	barrier(); \
@@ -86,7 +92,9 @@ do { \
 
 // KID 20140116
 // ARM10C 20140125
-#define preempt_enable() /*ARM10C this*/ \
+// ARM10C 20140322
+// ARM10C 20140412
+#define preempt_enable() /*ARM10C this*/	\
 do { \
 	preempt_enable_no_resched(); \
 	barrier(); \

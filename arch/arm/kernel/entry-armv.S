@@ -484,6 +484,7 @@ ENDPROC(__und_usr)
 	.align	2
 4:	mov	pc, r9
 	.popsection
+/* ARM10C 20140329 */
 	.pushsection __ex_table,"a"
 	.long	1b, 4b
 #if CONFIG_ARM_THUMB && __LINUX_ARM_ARCH__ >= 6 && CONFIG_CPU_V7
@@ -1145,6 +1146,9 @@ __vectors_start:
 	.data
 
 // ARM10C 20130914
+// KID 20140320
+// exynos5250 amdale-5250 board 기준
+// cr_alignment: 0x70c7387d
 	.globl	cr_alignment
 	.globl	cr_no_alignment
 cr_alignment:

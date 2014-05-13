@@ -73,6 +73,7 @@
 #define LOCK_SECTION_END                        \
         ".previous\n\t"
 
+// ARM10C 20140405
 #define __lockfunc __attribute__((section(".spinlock.text")))
 
 /*
@@ -107,6 +108,12 @@ do {								\
 	do { *(lock) = __RAW_SPIN_LOCK_UNLOCKED(lock); } while (0)
 #endif
 
+// ARM10C 20140315
+// raw_spin_is_locked : 1
+// &lock->rlock: &(&(&cpu_add_remove_lock)->wait_lock)->rlock
+//
+// raw_spin_is_locked(&(&(&cpu_add_remove_lock)->wait_lock)->rlock):
+// arch_spin_is_locked(&(&(&(&cpu_add_remove_lock)->wait_lock)->rlock)->raw_lock)
 #define raw_spin_is_locked(lock)	arch_spin_is_locked(&(lock)->raw_lock)
 
 #ifdef CONFIG_GENERIC_LOCKBREAK
@@ -139,11 +146,13 @@ do {								\
  */
 #define raw_spin_unlock_wait(lock)	arch_spin_unlock_wait(&(lock)->raw_lock)
 
-#ifdef CONFIG_DEBUG_SPINLOCK	// ARM10C Y 
+#ifdef CONFIG_DEBUG_SPINLOCK // CONFIG_DEBUG_SPINLOCK=y
+// ARM10C 20140405
  extern void do_raw_spin_lock(raw_spinlock_t *lock) __acquires(lock);
 #define do_raw_spin_lock_flags(lock, flags) do_raw_spin_lock(lock)
  // KID 20140114
  extern int do_raw_spin_trylock(raw_spinlock_t *lock);	// ARM10C this 
+// ARM10C 20140412
  extern void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock);
 #else
 static inline void do_raw_spin_lock(raw_spinlock_t *lock) __acquires(lock)
@@ -180,6 +189,7 @@ static inline void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock)
 // ARM10C 20130907 _raw_spin_trylock(lock) = 1 
 #define raw_spin_trylock(lock)	__cond_lock(lock, _raw_spin_trylock(lock))
 
+// ARM10C 20140405
 #define raw_spin_lock(lock)	_raw_spin_lock(lock)
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
@@ -233,6 +243,7 @@ static inline void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock)
 
 #define raw_spin_lock_irq(lock)		_raw_spin_lock_irq(lock)
 #define raw_spin_lock_bh(lock)		_raw_spin_lock_bh(lock)
+// ARM10C 20140412
 #define raw_spin_unlock(lock)		_raw_spin_unlock(lock)
 #define raw_spin_unlock_irq(lock)	_raw_spin_unlock_irq(lock)
 
@@ -298,6 +309,7 @@ do {							\
 	raw_spin_lock_init(&(_lock)->rlock);		\
 } while (0)
 
+// ARM10C 20140405
 static inline void spin_lock(spinlock_t *lock)
 {
 	raw_spin_lock(&lock->rlock);
@@ -338,6 +350,7 @@ do {									\
 	raw_spin_lock_irqsave_nested(spinlock_check(lock), flags, subclass); \
 } while (0)
 
+// ARM10C 20140412
 static inline void spin_unlock(spinlock_t *lock)
 {
 	raw_spin_unlock(&lock->rlock);
@@ -378,8 +391,12 @@ static inline void spin_unlock_wait(spinlock_t *lock)
 	raw_spin_unlock_wait(&lock->rlock);
 }
 
+// ARM10C 20140315
+// spin_is_locked(&(&cpu_add_remove_lock)->wait_lock)
 static inline int spin_is_locked(spinlock_t *lock)
 {
+	// lock->rlock: (&(&cpu_add_remove_lock)->wait_lock)->rlock
+	// raw_spin_is_locked(&(&(&cpu_add_remove_lock)->wait_lock)->rlock): 1
 	return raw_spin_is_locked(&lock->rlock);
 }
 

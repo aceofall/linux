@@ -8,7 +8,11 @@
  */
 #define CR_M	(1 << 0)	/* MMU enable				*/
 #define CR_A	(1 << 1)	/* Alignment abort enable		*/
+// KID 20140325
+// CR_C: 0x4	
 #define CR_C	(1 << 2)	/* Dcache enable			*/
+// KID 20140325
+// CR_W: 0x8	
 #define CR_W	(1 << 3)	/* Write buffer enable			*/
 #define CR_P	(1 << 4)	/* 32-bit exception handler		*/
 #define CR_D	(1 << 5)	/* 32-bit data address range		*/
@@ -34,10 +38,14 @@
 #define CR_FI	(1 << 21)	/* Fast interrupt (lower latency mode)	*/
 #define CR_U	(1 << 22)	/* Unaligned access operation		*/
 // ARM10C 20131026
+// KID 20140320
+// CR_XP: 0x800000
 #define CR_XP	(1 << 23)	/* Extended page tables			*/
 #define CR_VE	(1 << 24)	/* Vectored interrupts			*/
 #define CR_EE	(1 << 25)	/* Exception (Big) Endian		*/
 // ARM10C 20131026
+// KID 20140321
+// CR_TRE: 0x10000000
 #define CR_TRE	(1 << 28)	/* TEX remap enable			*/
 #define CR_AFE	(1 << 29)	/* Access flag enable			*/
 #define CR_TE	(1 << 30)	/* Thumb exception enable		*/
@@ -48,6 +56,10 @@
 // ARM10C 20131102
 // cr_alignment: 0x10c5387d, CR_V: (1 << 13)
 // vectors_high(): (1 << 13)
+// KID 20140320
+// exynos5250 amdale-5250 board 기준
+// cr_alignment: 0x70c7387d
+// vectors_high(): 0x2000
 #define vectors_high()	(cr_alignment & CR_V)
 #else
 #define vectors_high()	(0)
@@ -56,15 +68,24 @@
 // ARM10C 20130914
 #ifdef CONFIG_CPU_CP15 // CONFIG_CPU_CP15 = y
 
+// KID 20140320
+// exynos5250 amdale-5250 board 기준
+// cr_alignment: 0x70c7387d
 extern unsigned long cr_no_alignment;	/* defined in entry-armv.S */
 extern unsigned long cr_alignment;	/* defined in entry-armv.S */
 
 // ARM10C 20131026
+// KID 20140320
 static inline unsigned int get_cr(void)
 {
 	unsigned int val;
+
+	// A.R.M: B4.1.130 SCTLR, SystemControl Register, VMSA
 	asm("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r" (val) : : "cc");
+
+	// val: 0x70c7387d
 	return val;
+	// return 0x70c7387d
 }
 
 static inline void set_cr(unsigned int val)

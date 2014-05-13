@@ -358,6 +358,7 @@
 	}								\
 									\
 	/* Built-in module parameters. */				\
+	/* ARM10C 20140322 */						\
 	__param : AT(ADDR(__param) - LOAD_OFFSET) {			\
 		VMLINUX_SYMBOL(__start___param) = .;			\
 		*(__param)						\
@@ -377,6 +378,9 @@
 /* RODATA & RO_DATA provided for backward compatibility.
  * All archs are supposed to use RO_DATA() */
 #define RODATA          RO_DATA_SECTION(4096)
+/*
+// KID 20140304
+*/
 #define RO_DATA(align)  RO_DATA_SECTION(align)
 
 #define SECURITY_INIT							\
@@ -437,8 +441,19 @@
 #endif
 
 /* Section used for early init (in .S files) */
+/*
+// KID 20140304
+*/
 #define HEAD_TEXT  *(.head.text)
 
+/*
+// KID 20140306
+// gnu_ld manual p65. builtin opition.
+// 3.6.8.2 Output Section LMA
+// AT(lma) or AT>lam_reason: 
+// The AT keyword takes an expression as an argument. This specifies the exact load address
+// of the section. The AT> keyword takes the name of a memory region as an argument.
+*/
 #define HEAD_TEXT_SECTION							\
 	.head.text : AT(ADDR(.head.text) - LOAD_OFFSET) {		\
 		HEAD_TEXT						\
@@ -605,6 +620,14 @@
 	}
 
 /* ARM10C 20131019 */
+/*
+// KID 20140306
+// gnu_ld manual p81. builtin opition.
+// 3.10.9 Builtin Functions
+// ALIGN(align): ALIGN(., align) is same.
+// Return the location counter (.) or arbitrary expression aligned to the next
+// align boundary.
+*/
 #define INIT_SETUP(initsetup_align)					\
 		. = ALIGN(initsetup_align);				\
 		VMLINUX_SYMBOL(__setup_start) = .;			\

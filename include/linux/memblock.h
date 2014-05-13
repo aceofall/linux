@@ -17,9 +17,13 @@
 #include <linux/init.h>
 #include <linux/mm.h>
 
+// KID 20140307
 #define INIT_MEMBLOCK_REGIONS	128
 
 // ARM10C 20131019
+// KID 20140307
+// ARM10C 20140419
+// sizeof(struct memblock_region): 8 bytes
 struct memblock_region {
 	phys_addr_t base;
 	phys_addr_t size;
@@ -30,6 +34,7 @@ struct memblock_region {
 
 // ARM10C 20131019
 // ARM10C 20131207
+// KID 20140307
 struct memblock_type {
 	unsigned long cnt;	/* number of regions */
 	unsigned long max;	/* size of the allocated array */
@@ -39,6 +44,7 @@ struct memblock_type {
 
 // ARM10C 20131019
 // ARM10C 20131207
+// KID 20140307
 struct memblock {
 	phys_addr_t current_limit;
 	struct memblock_type memory;
@@ -46,6 +52,8 @@ struct memblock {
 };
 
 extern struct memblock memblock;
+
+// KID 20140311
 extern int memblock_debug;
 
 #define memblock_dbg(fmt, ...) \
@@ -61,6 +69,7 @@ int memblock_add_node(phys_addr_t base, phys_addr_t size, int nid);
 int memblock_add(phys_addr_t base, phys_addr_t size);
 int memblock_remove(phys_addr_t base, phys_addr_t size);
 int memblock_free(phys_addr_t base, phys_addr_t size);
+// KID 20140311
 int memblock_reserve(phys_addr_t base, phys_addr_t size);
 void memblock_trim_memory(phys_addr_t align);
 
@@ -139,10 +148,12 @@ static inline int memblock_get_region_node(const struct memblock_region *r)
 }
 #else
 // ARM10C 20131019
+// KID 20140307
 static inline void memblock_set_region_node(struct memblock_region *r, int nid)
 {
 }
 
+// KID 20140307
 static inline int memblock_get_region_node(const struct memblock_region *r)
 {
 	return 0;
@@ -176,6 +187,7 @@ int memblock_is_region_reserved(phys_addr_t base, phys_addr_t size);
 extern void __memblock_dump_all(void);
 
 // ARM10C 20131026
+// KID 20140311
 static inline void memblock_dump_all(void)
 {
 	// memblock_debug: 0
@@ -204,24 +216,35 @@ void memblock_set_current_limit(phys_addr_t limit);
  * memblock_region_memory_base_pfn - Return the lowest pfn intersecting with the memory region
  * @reg: memblock_region structure
  */
+// ARM10C 20140419
+// mem: memblock.memory.regions
 static inline unsigned long memblock_region_memory_base_pfn(const struct memblock_region *reg)
 {
+	// reg->base: memblock.memory.regions[0].base: 0x20000000
 	return PFN_UP(reg->base);
+	// return 0x20000
 }
 
 /**
  * memblock_region_memory_end_pfn - Return the end_pfn this region
  * @reg: memblock_region structure
  */
+// ARM10C 20140419
+// mem: memblock.memory.regions
 static inline unsigned long memblock_region_memory_end_pfn(const struct memblock_region *reg)
 {
+	// reg->base: memblock.memory.regions[0].base: 0x20000000
+	// reg->base: memblock.memory.regions[0].size: 0x80000000
 	return PFN_DOWN(reg->base + reg->size);
+	// return 0xA0000
 }
 
 /**
  * memblock_region_reserved_base_pfn - Return the lowest pfn intersecting with the reserved region
  * @reg: memblock_region structure
  */
+// ARM10C 20140419
+// res: memblock.reserved.regions
 static inline unsigned long memblock_region_reserved_base_pfn(const struct memblock_region *reg)
 {
 	return PFN_DOWN(reg->base);
@@ -231,6 +254,8 @@ static inline unsigned long memblock_region_reserved_base_pfn(const struct membl
  * memblock_region_reserved_end_pfn - Return the end_pfn this region
  * @reg: memblock_region structure
  */
+// ARM10C 20140419
+// res: memblock.reserved.regions
 static inline unsigned long memblock_region_reserved_end_pfn(const struct memblock_region *reg)
 {
 	return PFN_UP(reg->base + reg->size);
@@ -238,6 +263,8 @@ static inline unsigned long memblock_region_reserved_end_pfn(const struct memblo
 
 // ARM10C 20131102
 // ARM10C 20131207
+// KID 20140418
+// ARM10C 20140419
 #define for_each_memblock(memblock_type, region)					\
 	for (region = memblock.memblock_type.regions;				\
 	     region < (memblock.memblock_type.regions + memblock.memblock_type.cnt);	\

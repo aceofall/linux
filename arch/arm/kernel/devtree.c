@@ -27,8 +27,11 @@
 #include <asm/mach-types.h>
 
 // ARM10C 20131012
+// KID 20140306
+// base: 0x20000000, size: 0x80000000
 void __init early_init_dt_add_memory_arch(u64 base, u64 size)
 {
+	// base: 0x20000000, size: 0x80000000
 	arm_add_memory(base, size);
 }
 
@@ -40,15 +43,18 @@ void * __init early_init_dt_alloc_memory_arch(u64 size, u64 align)
 }
 
 // ARM10C 20131026
+// KID 20140311
 void __init arm_dt_memblock_reserve(void)
 {
 	u64 *reserve_map, base, size;
 
-	// initial_boot_params: atag 의 위치 값
+	// initial_boot_params: atag / devtree의 위치 하고 있는 가상 주소 값
 	if (!initial_boot_params)
 		return;
 
 	/* Reserve the dtb region */
+	// virt_to_phys(initial_boot_params): atag / devtree의 위치 하고 있는 물리 주소 값
+	// be32_to_cpu(initial_boot_params->totalsize): 0x3236
 	memblock_reserve(virt_to_phys(initial_boot_params),
 			 be32_to_cpu(initial_boot_params->totalsize));
 
@@ -58,14 +64,23 @@ void __init arm_dt_memblock_reserve(void)
 	 * doesn't hurt anything
 	 */
 	// offset to memory reserve map
+	// be32_to_cpu(initial_boot_params->off_mem_rsvmap): 0x28
 	reserve_map = ((void*)initial_boot_params) +
 			be32_to_cpu(initial_boot_params->off_mem_rsvmap);
+	// reserve_map: devtree에서 가지고 있는 reserve map 정보의 가상 주소 값
+
 	while (1) {
 		// detree 값이 big endian이므로 little로 변환
 		base = be64_to_cpup(reserve_map++);
+		// base: 0x0
+
 		size = be64_to_cpup(reserve_map++);
+		// size: 0x0
+
 		if (!size)
 			break;
+			// break
+
 		memblock_reserve(base, size);
 	}
 }
@@ -232,6 +247,7 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
 
 // 2013/09/28 종료
 // 2013/10/05 시작
+
 	devtree = phys_to_virt(dt_phys);
 
 	/* check device tree validity */
@@ -281,19 +297,25 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
 	}
 
 	model = of_get_flat_dt_prop(dt_root, "model", NULL);
+	// model: "Samsung SMDK5420 board based on EXYNOS5420"
 
 	// model 명이 없으면 compatible 의 문자열을 가져옴 
 	if (!model)
 		model = of_get_flat_dt_prop(dt_root, "compatible", NULL);
 	if (!model)
 		model = "<unknown>";
+
+	// mdesc_best->name: "SAMSUNG EXYNOS5 (Flattened Device Tree)"
+	// model: "Samsung SMDK5420 board based on EXYNOS5420"
 	pr_info("Machine: %s, model: %s\n", mdesc_best->name, model);
 
 // 2013/10/05 종료
 // 2013/10/12 시작
+
 	/* Retrieve various information from the /chosen node */
 	// dt에서 chosen 노드를 찾고 정보를 저장 
 	of_scan_flat_dt(early_init_dt_scan_chosen, boot_command_line);
+	// boot_command_line: "console=ttySAC2,115200 init=/linuxrc"
 
 	/* Initialize {size,address}-cells info */
 	// dt에서 root 노드에 있는 정보를 저장
@@ -305,8 +327,8 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
 
 	/* Change machine number to match the mdesc we're using */
 	// FIXME: machine_arch_type값이 0xFFFFFFFF 가 맞는지?
-	// __machine_arch_type = 0xFFFFFFFF 
 	__machine_arch_type = mdesc_best->nr;
+	// __machine_arch_type = 0xFFFFFFFF
 
 	return mdesc_best;
 }

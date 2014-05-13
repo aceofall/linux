@@ -16,6 +16,8 @@
 void free_pgtables(struct mmu_gather *tlb, struct vm_area_struct *start_vma,
 		unsigned long floor, unsigned long ceiling);
 
+// ARM10C 20140329
+// p: 0x20000 (pfn)
 static inline void set_page_count(struct page *page, int v)
 {
 	atomic_set(&page->_count, v);
@@ -25,11 +27,19 @@ static inline void set_page_count(struct page *page, int v)
  * Turn a non-refcounted page (->_count == 0) into refcounted with
  * a count of one.
  */
+// ARM10C 20140329
+// page: 0x20000의 해당하는 struct page의 주소
 static inline void set_page_refcounted(struct page *page)
 {
+	// page: 0x20000의 해당하는 struct page의 주소
 	VM_BUG_ON(PageTail(page));
+
+	// atomic_read(&page->_count): 0
 	VM_BUG_ON(atomic_read(&page->_count));
+
+	// page: 0x20000의 해당하는 struct page의 주소
 	set_page_count(page, 1);
+	// page: 0x20000의 해당하는 struct page의 1st page의 _count를 1로 set
 }
 
 static inline void __get_page_tail_foll(struct page *page,
@@ -146,6 +156,7 @@ isolate_migratepages_range(struct zone *zone, struct compact_control *cc,
  * zone->lock is already acquired when we use these.
  * So, we don't need atomic page->flags operations here.
  */
+// ARM10C 20140405
 static inline unsigned long page_order(struct page *page)
 {
 	/* PageBuddy() must be checked by the caller */
@@ -361,6 +372,9 @@ unsigned long reclaim_clean_pages_from_list(struct zone *zone,
 					    struct list_head *page_list);
 /* The ALLOC_WMARK bits are used as an index to zone->watermark */
 #define ALLOC_WMARK_MIN		WMARK_MIN
+// ARM10C 20140426
+// WMARK_LOW: 1
+// ALLOC_WMARK_LOW: 1
 #define ALLOC_WMARK_LOW		WMARK_LOW
 #define ALLOC_WMARK_HIGH	WMARK_HIGH
 #define ALLOC_NO_WATERMARKS	0x04 /* don't check watermarks at all */
@@ -370,6 +384,7 @@ unsigned long reclaim_clean_pages_from_list(struct zone *zone,
 
 #define ALLOC_HARDER		0x10 /* try to alloc harder */
 #define ALLOC_HIGH		0x20 /* __GFP_HIGH set */
+// ARM10C 20140426
 #define ALLOC_CPUSET		0x40 /* check for correct cpuset */
 #define ALLOC_CMA		0x80 /* allow allocations from CMA areas */
 

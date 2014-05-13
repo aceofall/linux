@@ -44,9 +44,12 @@
 // ARM10C 20131005
 // ARM10C 20131207
 // ARM10C 20140301
+// ARM10C 20140329
+// ARM10C 20140412
 #define ALIGN(x, a)		__ALIGN_KERNEL((x), (a))
 #define __ALIGN_MASK(x, mask)	__ALIGN_KERNEL_MASK((x), (mask))
 #define PTR_ALIGN(p, a)		((typeof(p))ALIGN((unsigned long)(p), (a)))
+// KID 20140307
 #define IS_ALIGNED(x, a)		(((x) & ((typeof(x))(a) - 1)) == 0)
 
 // KID 20140203
@@ -125,6 +128,7 @@
 
 // ARM10C 20131026
 // ARM10C 20140125
+// ARM10C 20140315
 #define _RET_IP_		(unsigned long)__builtin_return_address(0)
 #define _THIS_IP_  ({ __label__ __here; __here: (unsigned long)&&__here; })
 
@@ -162,14 +166,15 @@ struct completion;
 struct pt_regs;
 struct user;
 
-#ifdef CONFIG_PREEMPT_VOLUNTARY
+#ifdef CONFIG_PREEMPT_VOLUNTARY // CONFIG_PREEMPT_VOLUNTARY=n
 extern int _cond_resched(void);
 # define might_resched() _cond_resched()
 #else
+// ARM10C 20140315
 # define might_resched() do { } while (0)
 #endif
 
-#ifdef CONFIG_DEBUG_ATOMIC_SLEEP
+#ifdef CONFIG_DEBUG_ATOMIC_SLEEP // CONFIG_DEBUG_ATOMIC_SLEEP=n
   void __might_sleep(const char *file, int line, int preempt_offset);
 /**
  * might_sleep - annotation for functions that can sleep
@@ -184,11 +189,14 @@ extern int _cond_resched(void);
 # define might_sleep() \
 	do { __might_sleep(__FILE__, __LINE__, 0); might_resched(); } while (0)
 #else
-  static inline void __might_sleep(const char *file, int line,
+ static inline void __might_sleep(const char *file, int line,
 				   int preempt_offset) { }
+// ARM10C 20140315
+// might_resched(): NULL function
 # define might_sleep() do { might_resched(); } while (0)
 #endif
 
+// ARM10C 20140426
 #define might_sleep_if(cond) do { if (cond) might_sleep(); } while (0)
 
 /*
@@ -811,6 +819,14 @@ static inline void ftrace_dump(enum ftrace_dump_mode oops_dump_mode) { }
  */
 // ARM10C 20131130
 // #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+// ARM10C 20140315
+// ptr: lock_count, type: struct mutex, member: count
+// 구조체의 주소를 시작 주소를 뽑아낸다.
+// #define container_of(lock_count, struct mutex, count) ({
+//	const typeof( ((struct mutex *)0)->count ) *__mptr = (lock_count);
+//	(struct mutex *)( (char *)__mptr - offsetof(struct mutex,count) );})
+// ARM10C 20140322
+// ptr : lock_count, type : struct mutex, member : count
 #define container_of(ptr, type, member) ({			\
 	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})

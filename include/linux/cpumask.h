@@ -121,8 +121,8 @@ extern const struct cpumask *const cpu_active_mask;
 #endif
 
 /* verify cpu argument to cpumask_* operators */
-// KID 20140203
 // ARM10C 20130907
+// KID 20140203
 // ARM10C 20140301
 // nr_cpumask_bits: 4
 static inline unsigned int cpumask_check(unsigned int cpu)
